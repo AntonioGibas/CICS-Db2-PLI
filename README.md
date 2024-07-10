@@ -9,7 +9,6 @@ Za napraviti:
   Isprogramirati svaku transakciju u PL/I-u
   Testiranje sustava.
 
-
 DB Design:
 
   - Knjige  (ID, NAZIV, AUTOR, KATGRJ, GODIZD)
