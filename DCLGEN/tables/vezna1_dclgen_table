@@ -1,0 +1,30 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.VEZNA1)                                      */
+ /*        LIBRARY(ANGI.INCLUDE(VEZNA1))                              */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(VEZNA1)                                          */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.VEZNA1 TABLE                                  
+           ( TABID                          INTEGER NOT NULL,           
+             TABIDAUT                       INTEGER NOT NULL,           
+             TABIDKNJ                       INTEGER NOT NULL            
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.VEZNA1                          */
+ /*********************************************************************/
+ DCL 1 VEZNA1,                                                          
+      5 TABID    BIN FIXED(31),                                         
+      5 TABIDAUT BIN FIXED(31),                                         
+      5 TABIDKNJ BIN FIXED(31);                                         
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL IVEZNA1(3) BIN FIXED(15);                                          
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 3          */
+ /*********************************************************************/

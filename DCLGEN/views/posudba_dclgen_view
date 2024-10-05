@@ -1,0 +1,32 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.VIEW_POSUDBA)                                */
+ /*        LIBRARY(ANGI.INCLUDE(POSUDBAV))                            */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(POSUDBAV)                                        */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.VIEW_POSUDBA TABLE                            
+           ( ID                             INTEGER NOT NULL,           
+             IDKNJ                          INTEGER NOT NULL,           
+             IDCLAN                         INTEGER NOT NULL,           
+             DATPOS                         DATE                        
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.VIEW_POSUDBA                    */
+ /*********************************************************************/
+ DCL 1 POSUDBAV,                                                        
+      5 ID       BIN FIXED(31),                                         
+      5 IDKNJ    BIN FIXED(31),                                         
+      5 IDCLAN   BIN FIXED(31),                                         
+      5 DATPOS   CHAR(10);                                              
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL IVIEW_POSUDBA(4) BIN FIXED(15);                                    
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 4          */
+ /*********************************************************************/

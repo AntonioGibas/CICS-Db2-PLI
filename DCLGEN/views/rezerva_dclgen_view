@@ -1,0 +1,34 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.VIEW_REZERV)                                 */
+ /*        LIBRARY(ANGI.INCLUDE(REZERVV))                             */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(REZERVV)                                         */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.VIEW_REZERV TABLE                             
+           ( ID                             INTEGER NOT NULL,           
+             IDKNJ                          INTEGER NOT NULL,           
+             IDCLAN                         INTEGER NOT NULL,           
+             DATREZ                         DATE,                       
+             REZSTAT                        INTEGER                     
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.VIEW_REZERV                     */
+ /*********************************************************************/
+ DCL 1 REZERVV,                                                         
+      5 ID       BIN FIXED(31),                                         
+      5 IDKNJ    BIN FIXED(31),                                         
+      5 IDCLAN   BIN FIXED(31),                                         
+      5 DATREZ   CHAR(10),                                              
+      5 REZSTAT  BIN FIXED(31);                                         
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL IVIEW_REZERV(5) BIN FIXED(15);                                     
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 5          */
+ /*********************************************************************/

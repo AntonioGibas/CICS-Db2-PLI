@@ -1,0 +1,32 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.NABAVA)                                      */
+ /*        LIBRARY(ANGI.INCLUDE(NABAVA))                              */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(NABAVA)                                          */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.NABAVA TABLE                                  
+           ( TABID                          INTEGER NOT NULL,           
+             TABIDKNJ                       INTEGER NOT NULL,           
+             TABIDDOB                       INTEGER NOT NULL,           
+             TABDATNAB                      DATE                        
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.NABAVA                          */
+ /*********************************************************************/
+ DCL 1 NABAVA,                                                          
+      5 TABID    BIN FIXED(31),                                         
+      5 TABIDKNJ BIN FIXED(31),                                         
+      5 TABIDDOB BIN FIXED(31),                                         
+      5 TABDATNAB  CHAR(10);                                            
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL INABAVA(4) BIN FIXED(15);                                          
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 4          */
+ /*********************************************************************/

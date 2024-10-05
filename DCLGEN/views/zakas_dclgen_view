@@ -1,0 +1,34 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.VIEW_ZAKAS)                                  */
+ /*        LIBRARY(ANGI.INCLUDE(ZAKASV))                              */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(ZAKASV)                                          */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.VIEW_ZAKAS TABLE                              
+           ( ID                             INTEGER NOT NULL,           
+             IDCLAN                         INTEGER NOT NULL,           
+             IDPOS                          INTEGER NOT NULL,           
+             ZAKDAT                         DATE,                       
+             IZNOS                          INTEGER                     
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.VIEW_ZAKAS                      */
+ /*********************************************************************/
+ DCL 1 ZAKASV,                                                          
+      5 ID       BIN FIXED(31),                                         
+      5 IDCLAN   BIN FIXED(31),                                         
+      5 IDPOS    BIN FIXED(31),                                         
+      5 ZAKDAT   CHAR(10),                                              
+      5 IZNOS    BIN FIXED(31);                                         
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL IVIEW_ZAKAS(5) BIN FIXED(15);                                      
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 5          */
+ /*********************************************************************/

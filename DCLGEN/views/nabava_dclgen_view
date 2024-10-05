@@ -1,0 +1,32 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.VIEW_NABAVA)                                 */
+ /*        LIBRARY(ANGI.INCLUDE(NABAVAV))                             */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(NABAVAV)                                         */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.VIEW_NABAVA TABLE                             
+           ( ID                             INTEGER NOT NULL,           
+             IDKNJ                          INTEGER NOT NULL,           
+             IDDOB                          INTEGER NOT NULL,           
+             DATNAB                         DATE                        
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.VIEW_NABAVA                     */
+ /*********************************************************************/
+ DCL 1 NABAVAV,                                                         
+      5 ID       BIN FIXED(31),                                         
+      5 IDKNJ    BIN FIXED(31),                                         
+      5 IDDOB    BIN FIXED(31),                                         
+      5 DATNAB   CHAR(10);                                              
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL IVIEW_NABAVA(4) BIN FIXED(15);                                     
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 4          */
+ /*********************************************************************/

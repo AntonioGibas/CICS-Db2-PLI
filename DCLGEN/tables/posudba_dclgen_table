@@ -1,0 +1,32 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.POSUDBA)                                     */
+ /*        LIBRARY(ANGI.INCLUDE(POSUDBA))                             */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(POSUDBA)                                         */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.POSUDBA TABLE                                 
+           ( TABID                          INTEGER NOT NULL,           
+             TABIDKNJ                       INTEGER NOT NULL,           
+             TABIDCLAN                      INTEGER NOT NULL,           
+             TABDATPOS                      DATE                        
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.POSUDBA                         */
+ /*********************************************************************/
+ DCL 1 POSUDBA,                                                         
+      5 TABID    BIN FIXED(31),                                         
+      5 TABIDKNJ BIN FIXED(31),                                         
+      5 TABIDCLAN  BIN FIXED(31),                                       
+      5 TABDATPOS  CHAR(10);                                            
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL IPOSUDBA(4) BIN FIXED(15);                                         
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 4          */
+ /*********************************************************************/

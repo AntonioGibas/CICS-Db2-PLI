@@ -1,0 +1,30 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.VIEW_DOBAVLJ)                                */
+ /*        LIBRARY(ANGI.INCLUDE(DOBAVLJV))                            */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(DOBAVLJV)                                        */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.VIEW_DOBAVLJ TABLE                            
+           ( ID                             INTEGER NOT NULL,           
+             NAZIV                          VARCHAR(60) NOT NULL,       
+             KONTBR                         INTEGER                     
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.VIEW_DOBAVLJ                    */
+ /*********************************************************************/
+ DCL 1 DOBAVLJV,                                                        
+      5 ID       BIN FIXED(31),                                         
+      5 NAZIV    CHAR(60) VAR,                                          
+      5 KONTBR   BIN FIXED(31);                                         
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL IVIEW_DOBAVLJ(3) BIN FIXED(15);                                    
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 3          */
+ /*********************************************************************/
