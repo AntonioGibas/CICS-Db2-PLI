@@ -12,7 +12,7 @@ Za napraviti:
 DB Design:
 
   - Knjige  (ID, NAZIV, AUTOR, KATGRJ, GODIZD)
-  - Èlanovi (ID, PREZIME, IME, DATOD, STATUS)
+  - ï¿½lanovi (ID, PREZIME, IME, DATOD, STATUS)
   - Autori  (ID, PREZIME, IME)
   - Posudba (ID, IDKNJ, IDCLAN, DATPOS)
   - Nabava  (ID, IDKNJ, IDDOB, DATNAB)
