@@ -1,5 +1,5 @@
 # CICS-Db2-PLI
-Szstav za obradu podataka knjižnice
+Sustav za obradu podataka knjižnice
 
 Za napraviti:
   Dizajn projekta na najvišoj razini - graf
