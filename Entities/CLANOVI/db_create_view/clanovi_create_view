@@ -1,0 +1,9 @@
+/* Kreiranje view-a za tablicu CLANOVI s originalnim nazivima kolona */
+CREATE VIEW VIEW_CLANOVI AS
+    SELECT 
+        TABID AS ID, /* ID èlana */
+        TABPREZ AS PREZ, /* Prezime èlana */
+        TABIME AS IME, /* Ime èlana */
+        TABDATOD AS DATOD, /* Datum uèlanjenja */
+        TABSTATUS AS STATUS /* Status èlana */
+ FROM CLANOVI;

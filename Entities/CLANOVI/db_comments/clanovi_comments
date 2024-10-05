@@ -1,0 +1,15 @@
+/* Dodavanje komentara na stupce */
+COMMENT ON COLUMN CLANOVI.TABID 
+    IS 'TABID - ID èlana';
+    
+COMMENT ON COLUMN CLANOVI.TABPREZ 
+    IS 'TABPREZ - Prezime èlana';
+
+COMMENT ON COLUMN CLANOVI.TABIME 
+    IS 'TABIME - Ime èlana';
+
+COMMENT ON COLUMN CLANOVI.TABDATOD 
+    IS 'TABDATOD - Datum uèlanjenja';
+
+COMMENT ON COLUMN CLANOVI.TABSTATUS 
+    IS 'TABSTATUS - Status èlana';
