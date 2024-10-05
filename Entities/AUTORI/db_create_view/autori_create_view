@@ -1,7 +1,0 @@
-/* Kreiranje view-a za tablicu AUTORI s originalnim nazivima kolona */
-CREATE VIEW VIEW_AUTORI AS
-    SELECT 
-        TABID AS ID, /* ID autora */
-        TABPREZ AS PREZ, /* Prezime autora */
-        TABIME AS IME /* Ime autora */
- FROM AUTORI;

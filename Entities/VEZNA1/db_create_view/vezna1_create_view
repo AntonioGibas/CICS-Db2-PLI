@@ -1,7 +1,0 @@
-/* Kreiranje view-a za tablicu VEZNA1 s originalnim nazivima kolona */
-CREATE VIEW VIEW_VEZNA1 AS
-    SELECT 
-        TABID AS ID, /* ID veze */
-        TABIDAUT AS IDAUT, /* ID autora */
-        TABIDKNJ AS IDKNJ /* ID knjige */
- FROM VEZNA1;

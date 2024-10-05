@@ -1,9 +1,0 @@
-/* Dodavanje komentara na stupce */
-COMMENT ON COLUMN VEZNA1.TABID 
-    IS 'TABID - ID veze';
-
-COMMENT ON COLUMN VEZNA1.TABIDAUT 
-    IS 'TABIDAUT - ID autora';
-
-COMMENT ON COLUMN VEZNA1.TABIDKNJ 
-    IS 'TABIDKNJ - ID knjige';

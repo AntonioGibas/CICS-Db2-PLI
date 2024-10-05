@@ -1,3 +1,0 @@
-/* Kreiranje jedinstvenog indeksa za kolonu TABID */
-CREATE UNIQUE INDEX IDX_UNIQUE_AUTORI_ID
-    ON AUTORI (TABID);

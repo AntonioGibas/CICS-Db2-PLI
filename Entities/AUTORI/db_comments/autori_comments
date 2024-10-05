@@ -1,9 +1,0 @@
-/* Dodavanje komentara na stupce */
-COMMENT ON COLUMN AUTORI.TABID 
-    IS 'TABID - ID autora';
-    
-COMMENT ON COLUMN AUTORI.TABPREZ 
-    IS 'TABPREZ - Prezime autora';
-
-COMMENT ON COLUMN AUTORI.TABIME 
-    IS 'TABIME - Ime autora';
