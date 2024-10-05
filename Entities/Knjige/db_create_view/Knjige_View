@@ -1,0 +1,10 @@
+/* Kreiranje view-a za tablicu KNJIGE s originalnim nazivima kolona */
+CREATE VIEW VIEW_KNJIGE AS
+    SELECT 
+        TABID AS ID, /* ID knjige */
+        TABNAZIV AS NAZIV, /* Naziv knjige */
+        TABAUTOR AS AUTOR, /* Naziv autora */
+        TABKATGRJ AS KATGRJ, /* Kategorija knjige */
+        TABGODIZD AS GODIZD, /* Godina izdanja */
+        TABBRKNJ AS BRKNJ /* Broj knjige */
+ FROM KNJIGE;

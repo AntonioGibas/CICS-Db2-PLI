@@ -1,0 +1,3 @@
+/* Kreiranje jedinstvenog indeksa za kolonu TABID */
+CREATE UNIQUE INDEX IDX_UNIQUE_KNJIGE_ID
+ON KNJIGE (TABID);

@@ -1,0 +1,18 @@
+/* Dodavanje komentara na stupce */
+COMMENT ON COLUMN KNJIGE.TABID 
+    IS 'TABID - ID knjige';
+    
+COMMENT ON COLUMN KNJIGE.TABNAZIV 
+    IS 'TABNAZIV - Naziv knjige';
+
+COMMENT ON COLUMN KNJIGE.TABAUTOR 
+    IS 'TABAUTOR - Naziv autora knjige';
+
+COMMENT ON COLUMN KNJIGE.TABKATGRJ 
+    IS 'TABKATGRJ - Kategorija knjige';
+
+COMMENT ON COLUMN KNJIGE.TABGODIZD 
+    IS 'TABGODIZD - Godina izdanja';
+
+COMMENT ON COLUMN KNJIGE.TABBRKNJ 
+    IS 'TABBRKNJ - Broj knjige';
