@@ -1,0 +1,36 @@
+ /*********************************************************************/
+ /* DCLGEN TABLE(IBMUSER.KNJIGE)                                      */
+ /*        LIBRARY(ANGI.INCLUDE(KNJIGE))                              */
+ /*        LANGUAGE(PLI)                                              */
+ /*        STRUCTURE(KNJIGE)                                          */
+ /*        APOST                                                      */
+ /*        LABEL(YES)                                                 */
+ /*        DBCSDELIM(NO)                                              */
+ /*        INDVAR(YES)                                                */
+ /* ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS      */
+ /*********************************************************************/
+ EXEC SQL DECLARE IBMUSER.KNJIGE TABLE                                  
+           ( TABID                          INTEGER NOT NULL,           
+             TABNAZIV                       VARCHAR(60) NOT NULL,       
+             TABAUTOR                       VARCHAR(60),                
+             TABKATGRJ                      VARCHAR(20),                
+             TABGODIZD                      INTEGER,                    
+             TABBRKNJ                       INTEGER                     
+           ) ;                                                          
+ /*********************************************************************/
+ /* PLI DECLARATION FOR TABLE IBMUSER.KNJIGE                          */
+ /*********************************************************************/
+ DCL 1 KNJIGE,                                                          
+      5 TABID    BIN FIXED(31),                                         
+      5 TABNAZIV CHAR(60) VAR,                                          
+      5 TABAUTOR CHAR(60) VAR,                                          
+      5 TABKATGRJ  CHAR(20) VAR,                                        
+      5 TABGODIZD  BIN FIXED(31),                                       
+      5 TABBRKNJ BIN FIXED(31);                                         
+ /*********************************************************************/
+ /* INDICATOR VARIABLE ARRAY                                          */
+ /*********************************************************************/
+ DCL IKNJIGE(6) BIN FIXED(15);                                          
+ /*********************************************************************/
+ /* THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 6          */
+ /*********************************************************************/
