@@ -1,0 +1,66 @@
+
+KNJIGE {
+	ID integer(9) pk increments unique
+	NAZIV varchar(60)
+	AUTOR varchar(60)
+	KATGRJ varchar(20)
+	GODIZD integer(4)
+	BRKNJ integer(3)
+}
+
+CLANOVI {
+	ID integer(9) pk increments unique
+	PREZ varchar(60)
+	IME varchar(60)
+	DATOD date
+	STATUS integer
+}
+
+VEZNA1 {
+	ID integer(9) pk increments unique
+	IDAUT integer(9) *> AUTORI.ID
+	IDKNJ integer(P) *> KNJIGE.ID
+}
+
+AUTORI {
+	ID integer(9) pk increments unique
+	PREZ varchar(60)
+	IME varchar(60)
+}
+
+POSUDBA {
+	ID integer(9) pk increments unique
+	IDKNJ integer(9) *> KNJIGE.ID
+	IDCLAN integer(9) *> CLANOVI.ID
+	DATPOS date
+}
+
+DOBAVLJ {
+	ID integer(9) pk increments unique
+	NAZIV varchar(60)
+	KONTBR integer(9)
+}
+
+NABAVA {
+	ID integer(9) pk increments unique
+	IDKNJ integer(9) *> KNJIGE.ID
+	IDDOB integer(9) *> DOBAVLJ.ID
+	DATNAB date
+}
+
+REZERV {
+	ID integer(9) pk increments unique
+	IDKNJ integer(9) *> KNJIGE.ID
+	IDCLAN integer(9) *> CLANOVI.ID
+	DATREZ date
+	REZSTAT integer
+}
+
+ZAKAS {
+	ID integer(9) pk increments unique
+	IDCLAN integer(9) *> CLANOVI.ID
+	IDPOS integer(9) *> POSUDBA.ID
+	ZAKDAT date
+	IZNOS integer(5)
+}
+
