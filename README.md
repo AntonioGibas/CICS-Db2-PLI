@@ -12,12 +12,14 @@ Za napraviti:
 DB Design:
 
   - Knjige  (ID, NAZIV, AUTOR, KATGRJ, GODIZD)
-  - �lanovi (ID, PREZIME, IME, DATOD, STATUS)
+  - Članovi (ID, PREZIME, IME, DATOD, STATUS)
   - Autori  (ID, PREZIME, IME)
   - Posudba (ID, IDKNJ, IDCLAN, DATPOS)
   - Nabava  (ID, IDKNJ, IDDOB, DATNAB)
   - Vezna1  (ID, IDAUTOR, IDKNJ)
   - Rezerv  (ID, IDKNJ, IDCLAN, DATREZ, REZSTAT)
+
+Screen definitions:
 
 Every book has unique ID number.
 Members can search by title, author, category or year
