@@ -1,4 +1,4 @@
-//<naziv_programa> JOB 1,NOTIFY=&SYSUID,MSGLEVEL=(1,1),MSGCLASS=X               
+//PROGA JOB 1,NOTIFY=&SYSUID,MSGLEVEL=(1,1),MSGCLASS=X               
 //* SQL Precompile                                                     
 //PRECOMP EXEC PGM=DSNHPC,                                             
 // PARM='HOST(PLI) SQL(DB2)',                                          
@@ -6,8 +6,8 @@
 //STEPLIB  DD  DSN=DSNC10.SDSNLOAD,DISP=SHR                            
 //SYSLIB   DD  DSN=ANGI.INCLUDE,DISP=SHR                               
 //         DD  DSN=DFH610.CICS.SDFHMAC,DISP=SHR                        
-//SYSIN    DD  DSN=ANGI.PLI(<naziv_programa>),DISP=SHR                          
-//SYSLIN   DD  DSN=&&SYSPUNCH(<naziv_programa>),                                
+//SYSIN    DD  DSN=ANGI.PLI(PROGA),DISP=SHR                          
+//SYSLIN   DD  DSN=&&SYSPUNCH(PROGA),                                
 //             DISP=(NEW,PASS),                                        
 //             SPACE=(CYL,(10,100,100)),                               
 //             DSORG=PO,                                               
@@ -22,14 +22,14 @@
 //             SPACE=(CYL,(5,5)),DISP=(MOD,PASS)                       
 //SYSCIN   DD  DSN=&&SYSCIN,DISP=(MOD,PASS),UNIT=SYSDA,                
 //             SPACE=(CYL,(5,5))                                       
-//DBRMLIB  DD  DSN=DSNC10.DBCG.DBRMLIB.DATA(<naziv_programa>),DISP=SHR          
+//DBRMLIB  DD  DSN=DSNC10.DBCG.DBRMLIB.DATA(PROGA),DISP=SHR          
 //SYSDUMP  DD  SYSOUT=*                                                
 //* PL/I COMPILER CALL                                                 
 //PLI    EXEC PGM=IBMZPLI,                                             
 //    PARM='+DD:OPTIONS',                                              
 //    REGION=0M                                                        
 //* COMPILER INPUT MEMBER:                                             
-//SYSIN    DD  DSN=ANGI.PLI(<naziv_programa>),DISP=SHR                          
+//SYSIN    DD  DSN=ANGI.PLI(PROGA),DISP=SHR                          
 //STEPLIB  DD  DSN=IEL610.SIBMZCMP,DISP=SHR                            
 //         DD  DSN=CEE.SCEERUN,DISP=SHR                                
 //         DD  DSN=DSNC10.DBCG.SDSNEXIT,DISP=SHR                        
@@ -42,13 +42,13 @@
 //SYSPRINT DD  SYSOUT=*                                                 
 //SYSUEXIT DD  DSN=USER.Z31A.PARMLIB(ANGIPARM),DISP=SHR                 
 //SYSOUT   DD  SYSOUT=*                                                 
-//SYSLIN   DD  DSN=&&SYSPUNCH(<naziv_programa>),                                
+//SYSLIN   DD  DSN=&&SYSPUNCH(PROGA),                                
 //             DISP=(OLD,PASS)                                          
 //ULAZ     DD  DSN=ANGI.INCLUDE,DISP=SHR                                
 //         DD  DSN=DFH610.CICS.SDFHMAC,DISP=SHR                         
 //* COMPILER OPCIJE:                                                    
 //*                                                                     
-//* AGGREGATE - Kori�tenje agregata u PL/I-u, dopu�taju�i operacije na  
+//* AGGREGATE - Korištenje agregata u PL/I-u, dopuštajući operacije na  
 //*             cijelim strukturama i nizovima u kodu.                  
 //*                                                                     
 //* ATTRIBUTES - Ispis variajbli i konstanti iz programa na listingu.   
@@ -56,15 +56,15 @@
 //* CMPAT(V2) - Kompitabilnost s PL/I verzijom 2.                       
 //*                                                                     
 //* DEFAULT(LINKAGE(SYSTEM)) - Postavlja zadanu vrijednost konverzije   
-//*            vanjskih procedura na SYSTEM - vanjske procedure �e      
+//*            vanjskih procedura na SYSTEM - vanjske procedure će      
 //*            sljediti konvenciju "linkanja".                          
 //*                                                                     
 //* DEFAULT(OVERLAP) - Optimizacija memorijskog prostora.               
 //*                                                                     
-//* EXIT - Zahtijev compileru da uklju�ii izlazni kod u listing, za     
+//* EXIT - Zahtijev compileru da ukljućii izlazni kod u listing, za     
 //*        diagnostiku.                                                 
 //*                                                                     
-//* EXTRN(FULL) - Sve vanjske reference su razrije�ene njihovim imenom. 
+//* EXTRN(FULL) - Sve vanjske reference su razrijeđene njihovim imenom. 
 //*                                                                     
 //* FLAG(I) - Ispis informacijskih poruka u kompajlerskom ispisu PL/I-a.
 //*                                                                     
@@ -76,14 +76,14 @@
 //*                                                                     
 //* LIMITS(FIXEDDEC(31)) - Limitacija decimalnih brojeva na 31 decimalu.
 //*                                                                     
-//* MACRO - Omogu�uje kori�tenje kompilerskih uputa u kodu.             
+//* MACRO - Omogućuje korištenje kompilerskih uputa u kodu.             
 //*                                                                     
 //* MARGINS(2,72,0) - Definiranje radnog prostora unutar koda:          
 //*                 - 2  - Lijeva margina                               
 //*                 - 72 - Desna margina                   
 //*                 - 0  - Nema nastavka                                
 //*                                                                     
-//* MAXNEST(BLOCK(50) DO(50) IF(50)) - Maksimalna ugnje?�ivanja         
+//* MAXNEST(BLOCK(50) DO(50) IF(50)) - Maksimalna ugnježđivanja         
 //*                                                                     
 //* OBJECT - Kreiranje kompajlerskog modula kao output - Load modul.    
 //*                                                                     
@@ -94,22 +94,22 @@
 //*                                                                     
 //* PP(SQL('DEC(15)')) - SQL decimal preciznost brojeva                 
 //*                                                                     
-//* PREFIX(SUBSCRIPTRANGE) - dodaje prefix odre�enim simbolima ili      
+//* PREFIX(SUBSCRIPTRANGE) - dodaje prefix određenim simbolima ili      
 //*                          funkcijama tijekom predkompilacije ili     
 //*                          kompilacije.                               
 //*                                                                     
-//* NOREDUCE - Onemogu�i compiler da poku�a smanjiti kod zbog           
-//*            optimiziranja - kod se kompajlira to�no kako je i napisan
+//* NOREDUCE - Onemogući compiler da pokuša smanjiti kod zbog           
+//*            optimiziranja - kod se kompajlira točno kako je i napisan
 //*                                                                     
-//* NORENT - Odre�uje da kompajlirani program ne�e biti "reentrant" -   
-//*          ne mo?e ih se vi�e pozvati u vi�e dretvi simultano.        
+//* NORENT - Određuje da kompajlirani program neće biti "reentrant" -   
+//*          ne mo?e ih se više pozvati u više dretvi simultano.        
 //*                                                                     
-//* RULES(LAXCTL) - Instrukcija za bla?e postavljanje sintakti�kih      
+//* RULES(LAXCTL) - Instrukcija za bla?e postavljanje sintaktičkih      
 //*                 pravila kodiranja za kod.                           
 //*                                                                     
-//* SOURCE - Uklju�uje cijeli source kod u kompiler izlistavanju.       
+//* SOURCE - Ukljućuje cijeli source kod u kompiler izlistavanju.       
 //*                                                                     
-//* STMT - Zahtijev da brojevi retka u kodu budu uklju�eni u            
+//* STMT - Zahtijev da brojevi retka u kodu budu ukljućeni u            
 //*        kompilersko izlistavanje.                                    
 //*                                                                     
 //* SYSTEM(MVS) - "Multiple Virtual Storage" - target OS.               
@@ -117,7 +117,7 @@
 //* NOWRITABLE - Kompajler ne smije generirati programske izraze -      
 //*              kompileani program je pohranjen kao READ-ONLY memorija 
 //* XREF - "Cross-refference listing" - pokazuje gdje i kako su sve     
-//*        variajble i labele definirane i iskori�tene u kodu.          
+//*        variajble i labele definirane i iskorištene u kodu.          
 //*                                                                     
 //OPTIONS  DD  *                                                        
   AGGREGATE,                                                            
@@ -148,7 +148,7 @@
   NOWRITABLE,                                                           
   XREF                                                                  
 /*                                                                      
-//DBRMLIB  DD DSN=DSNC10.DBCG.DBRMLIB.DATA(<naziv_programa>),DISP=SHR      
+//DBRMLIB  DD DSN=DSNC10.DBCG.DBRMLIB.DATA(PROGA),DISP=SHR      
 //SYSUT1   DD DSN=&&SYSUT1,UNIT=SYSALLDA,                              
 //            SPACE=(1024,(200,50),,CONTIG,ROUND),DCB=BLKSIZE=1024     
 //* SYSLIB SADR�I INCLUDEOVE                                           
@@ -158,14 +158,14 @@
 //   PARM='LIST,XREF,MAP',                                             
 //   REGION=0M                                                         
 //SYSLIB   DD DSN=CEE.SCEELKED,DISP=SHR                                
-//         DD DSN=ANGI.LOAD(<naziv_programa>),DISP=SHR                          
+//         DD DSN=ANGI.LOAD(PROGA),DISP=SHR                          
 //         DD DSN=DSNC10.SDSNLOAD,DISP=SHR                             
 //         DD DSN=DSNC10.DBCG.RUNLIB.LOAD,DISP=SHR                     
 //SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(100,10))                         
 //SYSPRINT DD SYSOUT=*                                                 
 //SYSUDUMP DD SYSOUT=*                                                 
-//SYSLIN   DD DSN=&&SYSPUNCH(<naziv_programa>),DISP=(OLD,DELETE)                
-//SYSLMOD  DD DSN=ANGI.LOAD(<naziv_programa>),DISP=SHR                          
+//SYSLIN   DD DSN=&&SYSPUNCH(PROGA),DISP=(OLD,DELETE)                
+//SYSLMOD  DD DSN=ANGI.LOAD(PROGA),DISP=SHR                          
 //* CREEBIND - nepotrebno za sada                                      
 //*CREBIND  EXEC PGM=SORT,                                             
 //* PARM='JP1"ANGI"'                                                   
@@ -173,9 +173,9 @@
 //*SYSPRINT  DD  SYSOUT=*                                              
 //*SYSUDUMP  DD  SYSOUT=*                                              
 //*SORTIN    DD  *,SYMBOLS=(EXECSYS)                                   
-//* ANGI.<naziv_programa>                                                       
+//* ANGI.PROGA                                                       
 //*                                                                    
-//SORTOUT   DD  DSN=DSNC10.DBCG.BIND.DATA(<naziv_programa>),DISP=SHR            
+//SORTOUT   DD  DSN=DSNC10.DBCG.BIND.DATA(PROGA),DISP=SHR            
 //SYSIN     DD  DSN=ANGI.COMPILE(PLICMPSC),DISP=SHR                    
 //* DB2 BIND                                                           
 //BIND  EXEC PGM=IKJEFT01,                                             
@@ -191,7 +191,7 @@
 //SYSTSIN  DD *                                                         
   DSN SYSTEM(DBCG)                                                      
   BIND PACKAGE(CRDB)    -                                               
-       MEMBER(<naziv_programa>)   -                                             
+       MEMBER(PROGA)   -                                             
        ACT(REPLACE)     -                                               
        VALIDATE(BIND)   -                                               
        EXPLAIN(NO)      -                                               
@@ -199,7 +199,7 @@
        DEGREE(ANY)      -                                               
        QUALIFIER(IBMUSER)  -                                            
        OWNER(IBMUSER)                                                   
-  BIND PLAN(<naziv_programa>)     -                                             
+  BIND PLAN(PROGA)     -                                             
      QUALIFIER(IBMUSER)    -                                            
      OWNER(IBMUSER)    -                                                
      PKLIST(CRDB.*,CBBX.*) -                                            
