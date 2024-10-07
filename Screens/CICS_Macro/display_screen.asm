@@ -41,7 +41,7 @@ VRSTA1   DFHMDF POS=(5,2),                                             X
                INITIAL='VRSTA:'
 UNOS01   DFHMDF POS=(5,9),                                             X
                LENGTH=11,                                              X
-               ATTRB=(UNPROT,NUM,IC),                                  X
+               ATTRB=(UNPROT,IC),                                      X
                COLOR=RED,                                              X
                INITIAL='___________'
 * OPIS POLJA
