@@ -20,7 +20,7 @@ DB Design:
   - Rezerv  (ID, IDKNJ, IDCLAN, DATREZ, REZSTAT)
 
 Screen definitions:
-  - MIRO Graph: TODO
+  - MIRO Graph: https://miro.com/welcomeonboard/eUpSZGhRbW51NVhlcGdhR0k2UE9JR0ZOYUwwUnZVQ3dmaXdyblZiQVFrUmFzMDQ4VmtGYktyMUhQWEplbWs4M3wzNDU4NzY0NjAyMzUxNjcxMDkxfDI=?share_link_id=291142519916
 
 Every book has unique ID number.
 Members can search by title, author, category or year
