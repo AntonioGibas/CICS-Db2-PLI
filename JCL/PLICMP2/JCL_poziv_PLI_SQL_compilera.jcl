@@ -48,7 +48,7 @@
 //         DD  DSN=DFH610.CICS.SDFHMAC,DISP=SHR                         
 //* COMPILER OPCIJE:                                                    
 //*                                                                     
-//* AGGREGATE - Korištenje agregata u PL/I-u, dopuštajući operacije na  
+//* AGGREGATE - Koristenje agregata u PL/I-u, dopustajuci operacije na  
 //*             cijelim strukturama i nizovima u kodu.                  
 //*                                                                     
 //* ATTRIBUTES - Ispis variajbli i konstanti iz programa na listingu.   
@@ -56,15 +56,15 @@
 //* CMPAT(V2) - Kompitabilnost s PL/I verzijom 2.                       
 //*                                                                     
 //* DEFAULT(LINKAGE(SYSTEM)) - Postavlja zadanu vrijednost konverzije   
-//*            vanjskih procedura na SYSTEM - vanjske procedure će      
+//*            vanjskih procedura na SYSTEM - vanjske procedure ce      
 //*            sljediti konvenciju "linkanja".                          
 //*                                                                     
 //* DEFAULT(OVERLAP) - Optimizacija memorijskog prostora.               
 //*                                                                     
-//* EXIT - Zahtijev compileru da ukljućii izlazni kod u listing, za     
+//* EXIT - Zahtijev compileru da ukljucii izlazni kod u listing, za     
 //*        diagnostiku.                                                 
 //*                                                                     
-//* EXTRN(FULL) - Sve vanjske reference su razrijeđene njihovim imenom. 
+//* EXTRN(FULL) - Sve vanjske reference su razrijedene njihovim imenom. 
 //*                                                                     
 //* FLAG(I) - Ispis informacijskih poruka u kompajlerskom ispisu PL/I-a.
 //*                                                                     
@@ -76,14 +76,14 @@
 //*                                                                     
 //* LIMITS(FIXEDDEC(31)) - Limitacija decimalnih brojeva na 31 decimalu.
 //*                                                                     
-//* MACRO - Omogućuje korištenje kompilerskih uputa u kodu.             
+//* MACRO - Omogucuje koristenje kompilerskih uputa u kodu.             
 //*                                                                     
 //* MARGINS(2,72,0) - Definiranje radnog prostora unutar koda:          
 //*                 - 2  - Lijeva margina                               
 //*                 - 72 - Desna margina                   
 //*                 - 0  - Nema nastavka                                
 //*                                                                     
-//* MAXNEST(BLOCK(50) DO(50) IF(50)) - Maksimalna ugnježđivanja         
+//* MAXNEST(BLOCK(50) DO(50) IF(50)) - Maksimalna ugnjezdivanja         
 //*                                                                     
 //* OBJECT - Kreiranje kompajlerskog modula kao output - Load modul.    
 //*                                                                     
@@ -94,22 +94,22 @@
 //*                                                                     
 //* PP(SQL('DEC(15)')) - SQL decimal preciznost brojeva                 
 //*                                                                     
-//* PREFIX(SUBSCRIPTRANGE) - dodaje prefix određenim simbolima ili      
+//* PREFIX(SUBSCRIPTRANGE) - dodaje prefix odredenim simbolima ili      
 //*                          funkcijama tijekom predkompilacije ili     
 //*                          kompilacije.                               
 //*                                                                     
-//* NOREDUCE - Onemogući compiler da pokuša smanjiti kod zbog           
-//*            optimiziranja - kod se kompajlira točno kako je i napisan
+//* NOREDUCE - Onemoguci compiler da pokusa smanjiti kod zbog           
+//*            optimiziranja - kod se kompajlira tocno kako je i napisan
 //*                                                                     
-//* NORENT - Određuje da kompajlirani program neće biti "reentrant" -   
-//*          ne mo?e ih se više pozvati u više dretvi simultano.        
+//* NORENT - Odreduje da kompajlirani program nece biti "reentrant" -   
+//*          ne mo?e ih se vise pozvati u vise dretvi simultano.        
 //*                                                                     
-//* RULES(LAXCTL) - Instrukcija za bla?e postavljanje sintaktičkih      
+//* RULES(LAXCTL) - Instrukcija za bla?e postavljanje sintaktickih      
 //*                 pravila kodiranja za kod.                           
 //*                                                                     
-//* SOURCE - Ukljućuje cijeli source kod u kompiler izlistavanju.       
+//* SOURCE - Ukljucuje cijeli source kod u kompiler izlistavanju.       
 //*                                                                     
-//* STMT - Zahtijev da brojevi retka u kodu budu ukljućeni u            
+//* STMT - Zahtijev da brojevi retka u kodu budu ukljuceni u            
 //*        kompilersko izlistavanje.                                    
 //*                                                                     
 //* SYSTEM(MVS) - "Multiple Virtual Storage" - target OS.               
@@ -117,7 +117,7 @@
 //* NOWRITABLE - Kompajler ne smije generirati programske izraze -      
 //*              kompileani program je pohranjen kao READ-ONLY memorija 
 //* XREF - "Cross-refference listing" - pokazuje gdje i kako su sve     
-//*        variajble i labele definirane i iskorištene u kodu.          
+//*        variajble i labele definirane i iskoristene u kodu.          
 //*                                                                     
 //OPTIONS  DD  *                                                        
   AGGREGATE,                                                            
@@ -151,7 +151,7 @@
 //DBRMLIB  DD DSN=DSNC10.DBCG.DBRMLIB.DATA(PROGA),DISP=SHR      
 //SYSUT1   DD DSN=&&SYSUT1,UNIT=SYSALLDA,                              
 //            SPACE=(1024,(200,50),,CONTIG,ROUND),DCB=BLKSIZE=1024     
-//* SYSLIB SADR�I INCLUDEOVE                                           
+//* SYSLIB SADRZI INCLUDEOVE                                           
 //SYSUDUMP  DD  SYSOUT=*                                               
 //* LINK-EDIT                                                          
 //LKED     EXEC PGM=IEWL,                                              
