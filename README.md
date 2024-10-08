@@ -21,6 +21,16 @@ DB Design:
 
 Screen definitions:
   - MIRO Graph: https://miro.com/welcomeonboard/eUpSZGhRbW51NVhlcGdhR0k2UE9JR0ZOYUwwUnZVQ3dmaXdyblZiQVFrUmFzMDQ4VmtGYktyMUhQWEplbWs4M3wzNDU4NzY0NjAyMzUxNjcxMDkxfDI=?share_link_id=291142519916
+  - Norme dizajniranja ekrana:
+    - Screen ID - plava boja
+    - Naslov - zelena boja
+    - Instrukcije i tekst instrukcija - bijela
+    - Opis polja - zelena boja
+    - Vrijednosti varijabla koje unosi korisnik - tirkizna
+    - Vrijednosti varijable koje su prikazane korisniku - tirkizna (Display-only-fields)
+    - Unosni errori - crvena
+    - Poruke upozorenja - Žuta boja s visokom intenzivnošću.
+    - Function tipke - opisi - plava
 
 Every book has unique ID number.
 Members can search by title, author, category or year
