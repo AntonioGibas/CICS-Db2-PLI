@@ -42,6 +42,15 @@ NASLOV4  DFHMDF POS=(7,12),                                            X
 *
 * POLJE ZA UNOS VRSTE SADRZAJA
 *
+IDUNOS   DFHMDF POS=(10,7),                                            X  
+               LENGTH=3,                                               X
+               ATTRB=(PROT),                                           X
+               INITIAL='ID:'         
+ID00001 DFHMDF POS=(10,11),                                            X
+               LENGTH=5,                                               X
+               ATTRB=(UNPROT,IC),                                      X
+               COLOR=TURQUOISE,                                        X
+               INITIAL='_____'
 PREZ01   DFHMDF POS=(12,2),                                            X
                LENGTH=8,                                               X
                ATTRB=(PROT),                                           X

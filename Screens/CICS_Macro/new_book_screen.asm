@@ -30,51 +30,60 @@ NASLOV2  DFHMDF POS=(3,2),                                             X
 *
 * POLJE ZA UNOS VRSTE SADRZAJA
 *
-NAZIV1   DFHMDF POS=(6,2),                                             X
+IDUNOS   DFHMDF POS=(10,2),                                            X  
+               LENGTH=11,                                              X
+               ATTRB=(PROT),                                           X
+               INITIAL='ID        :'         
+ID00001 DFHMDF POS=(10,14),                                            X
+               LENGTH=5,                                               X
+               ATTRB=(UNPROT,IC),                                      X
+               COLOR=TURQUOISE,                                        X
+               INITIAL='_____'
+NAZIV1   DFHMDF POS=(12,2),                                            X
                LENGTH=11,                                              X
                ATTRB=(PROT),                                           X
                INITIAL='NAZIV     :'
-UNOSP1   DFHMDF POS=(6,14),                                            X
+UNOSP1   DFHMDF POS=(12,14),                                           X
                LENGTH=60,                                              X
                ATTRB=(UNPROT,IC),                                      X
                COLOR=TURQUOISE,                                        X
                INITIAL='________________________________________'
 * NAZIV AUTORA
-NAUTO1   DFHMDF POS=(8,2),                                             X
+NAUTO1   DFHMDF POS=(14,2),                                            X
                LENGTH=11,                                              X
                ATTRB=(PROT),                                           X
                INITIAL='AUTOR     :'
-UNAUT1   DFHMDF POS=(8,14),                                            X
+UNAUT1   DFHMDF POS=(14,14),                                           X
                LENGTH=60,                                              X
                ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
                INITIAL='________________________________________'
 * KATEGORIJA
-KATGRJ1  DFHMDF POS=(10,2),                                            X
+KATGRJ1  DFHMDF POS=(16,2),                                            X
                LENGTH=11,                                              X
                ATTRB=(PROT),                                           X
                INITIAL='KATEGORIJA:'
-UNKAT1   DFHMDF POS=(10,14),                                           X
+UNKAT1   DFHMDF POS=(16,14),                                           X
                LENGTH=20,                                              X
                ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
                INITIAL='____________________'
 * GODINA IZDANJA
-GODIZD1  DFHMDF POS=(12,2),                                            X
+GODIZD1  DFHMDF POS=(18,2),                                            X
                LENGTH=11,                                              X
                ATTRB=(PROT,NORM),                                      X
                INITIAL='GODINA    :'
-UNGOD1   DFHMDF POS=(12,14),                                           X
+UNGOD1   DFHMDF POS=(18,14),                                           X
                LENGTH=5,                                               X
                ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
                INITIAL='_____'
 * BROJ KNJIGA
-BRKNJ1   DFHMDF POS=(14,2),                                            X
+BRKNJ1   DFHMDF POS=(20,2),                                            X
                LENGTH=11,                                              X
                ATTRB=(PROT,NORM),                                      X
                INITIAL='BROJ      :'
-UNBRK1   DFHMDF POS=(14,14),                                           X
+UNBRK1   DFHMDF POS=(20,14),                                           X
                LENGTH=5,                                               X
                ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
