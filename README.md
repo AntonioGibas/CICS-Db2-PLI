@@ -1,11 +1,6 @@
 # CICS-Db2-PLI
 Sustav za obradu podataka knjižnice
 
-Za napraviti:
-  Uspostaviti CICS - Db2 vezu
-  Isprogramirati svaku transakciju u PL/I-u
-  Testiranje sustava.
-
 DB Design:
 
   - Knjige  (ID, NAZIV, AUTOR, KATGRJ, GODIZD)
@@ -13,8 +8,10 @@ DB Design:
   - Autori  (ID, PREZIME, IME)
   - Posudba (ID, IDKNJ, IDCLAN, DATPOS)
   - Nabava  (ID, IDKNJ, IDDOB, DATNAB)
+  - Dobavlj (ID, NAZIV, KONTBR)
   - Vezna1  (ID, IDAUTOR, IDKNJ)
   - Rezerv  (ID, IDKNJ, IDCLAN, DATREZ, REZSTAT)
+  - Zakas   (ID, IDCLAN, IDPOS, ZAKDAT, IZNOS)
 
 Screen definitions:
   - MIRO Graph: https://miro.com/welcomeonboard/eUpSZGhRbW51NVhlcGdhR0k2UE9JR0ZOYUwwUnZVQ3dmaXdyblZiQVFrUmFzMDQ4VmtGYktyMUhQWEplbWs4M3wzNDU4NzY0NjAyMzUxNjcxMDkxfDI=?share_link_id=291142519916
