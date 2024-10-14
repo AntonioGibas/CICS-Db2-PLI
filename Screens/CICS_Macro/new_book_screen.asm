@@ -6,7 +6,7 @@ NBOOKM1 DFHMSD TYPE=&SYSPARM,                                          X
                CTRL=FREEKB,                                            X
                STORAGE=AUTO,                                           X
                MAPATTS=(COLOR),                                        X
-               TIOAPFX=NO
+               TIOAPFX=YES
 *
 *********************************************************************
 *
