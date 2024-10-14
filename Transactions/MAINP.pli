@@ -1,0 +1,173 @@
+ MAINP:procedure options(main);
+ 
+    %INCLUDE MAIN1M; /* Deklaracija simboličke mape ekrana */
+    %INCLUDE DFHAID; /* EIB polja */
+    %INCLUDE DFHBMSCA; /* Dodatna pomoćna polja */
+
+     /* FLAG ZA ERRORE */                           
+    DCL ERFLAG1 CHAR(1);                            
+
+     /* SELECTED APPLICATION - APLIAKCIJA ZA XCTL */        
+    DCL SEL_APP CHAR(8) INIT('');                           
+                                                            
+     /* DULJINA KOMUNIKACIJSKE STRUKTURE */                 
+    DCL COMMLEN FIXED BIN(15) INIT(100);                    
+                                                            
+    DCL COMMPTR PTR;                                        
+                                                            
+    DCL DFHCOMMAREA CHAR(100) BASED(COMMPTR);               
+                                                            
+    DCL 1 COMMAREA BASED(COMMPTR),                          
+         2 COMM_RETURN_PROGRAM CHAR(8),                     
+         2 COMM_SAVE_TRAN     CHAR(4),                      
+         2 COMM_RMS_INFORMATION,                            
+            3 COMM_RMS_TRAN     CHAR(4),                    
+            3 COMM_USERID       CHAR(4),                    
+            3 COMM_PASSWORD     CHAR(8),                    
+            3 COMM_FAST_PATH    CHAR(16),                   
+            3 COMM_ACCESS_GROUP  CHAR(8),                   
+            3 COMM_LOCATION      CHAR(16),                  
+            3 COMM_REPORT        CHAR(8),                   
+         2 FILLER              CHAR(20);                    
+
+     /* Poruka CICS-u da je ovo pointer na commarea */                          
+    EXEC CICS ADDRESS COMMAREA(COMMPTR);                    
+
+     /* Ako korisnik pritisne F3, izlazi se iz transakcije. */                  
+    IF EIBAID = DFHPF3 THEN CALL FINAL_RETURN;  
+
+     /* Ako korisnik pritisne F5, program ponovo prikazuje prazan ekran. 
+     */ 
+    IF EIBAID = DFHPF5 THEN CALL SEND_MAP;           
+
+     /* error handling */                                                       
+    EXEC CICS HANDLE CONDITION                              
+              PGMIDERR(NOT_FOUND)                           
+              MAPFAIL(SEND_MAP)                             
+              ILLOGIC(IO_ERROR);    
+
+      /* INICIJALIZACIJA POLJA EKRANA */                                
+    MAIN01O = '';                                                     
+    IMSG1O = 'UNESITE JEDNU OD PONUDJENIH OPCIJA.';                   
+                                                                      
+    /* PRVO SLANJE EKRANA */                                          
+    IF EIBCALEN = 0 THEN DO;                                          
+     /* PROSLJEDJUJE TRANSAKCIJSKI ID KOMUNIKACIJSKOM POLJU */        
+     COMMAREA.COMM_SAVE_TRAN = EIBTRNID;                              
+    END;                                                              
+                                                                      
+     /* REINIT KOMUNIKACIJSKE VARIAJBLE */                            
+    DFHCOMMAREA = '';                                                 
+                                                                      
+    IF EIBCALEN = 12 THEN CALL SEND_MAP;                              
+                                                                      
+     /* PRIHVAT INPUT VRIJENDOSTI IZ SIMBOLICKE MAPE U EKRAN */       
+    EXEC CICS RECEIVE                                                 
+              MAP('MAIN1')                                            
+              MAPSET('MAIN1M')                                        
+              INTO(MAIN01I);                                          
+                                                                      
+    IF UNOS01I = '' THEN UNOS01O = '__';                              
+                                                                      
+    ERFLAG1 = '';                                                     
+                                                                      
+    IF (UNOS01I = 'XX') | (UNOS01I = '__') THEN DO;                   
+     ERFLAG1 = 'Y';                                                   
+     UNOS01L = -1;                                                    
+     UNOS01F = DFHUNIMD;                                              
+    END;                                                                        
+                                                                    
+     /* AKO JE DSLO DO GRESKE, UPISUJE SE U INFO LINIJU I ZOVE MAPA */ 
+    IF ERFLAG1 = 'Y' THEN DO;                                          
+     IMSG1O = 'POGRESAN UNOS - PONOVNO UNESITE OPCIJU.';               
+     CALL SEND_MAP;                                                    
+    END;                                                               
+                                                                       
+    IF UNOS01I = '__' THEN CALL SEND_MAP;                              
+                                                                       
+    COMMAREA.COMM_RETURN_PROGRAM = 'MAINP';                            
+     /* OVISNO O UNOSU UNUTAR POLJA, BIRA SE PROGRAM ZA POZIV. */      
+    REINIT SEL_APP;                      
+      /* pregled korisnicki unesenih vrijednosti i prosljeđivanje naziva
+       aplikacije */
+     SELECT(UNOS01I);                                    
+       WHEN('02') DO;                                     
+         SEL_APP     = 'DISPP   ';                        
+        END;                                              
+       WHEN('03') DO;                                     
+         SEL_APP     = 'EDITP   ';                        
+        END;                                              
+       WHEN('04') DO;                                     
+         SEL_APP     = 'NUSERP  ';                        
+        END;                                              
+       WHEN('05') DO;                                     
+         SEL_APP     = 'NUAUTP  ';                        
+        END;                                              
+       WHEN('06') DO;                                     
+         SEL_APP     = 'NUSUPP  ';                        
+        END;                                              
+       WHEN('07') DO;                                     
+         SEL_APP     = 'NUREZP  ';                        
+        END;                                              
+       WHEN('08') DO;                                     
+         SEL_APP     = 'NUBKP   ';                        
+        END;                                              
+       WHEN('09') DO;                                     
+         SEL_APP     = 'MEMPP   ';                        
+        END;                                              
+       WHEN('10') DO;                                     
+         SEL_APP     = 'POSUDP  ';                        
+        END;                                              
+       OTHERWISE DO;                                      
+         IMSG1O = 'POGRESAN UNOS, UNESITE PONOVO.';       
+         CALL SEND_MAP;                                   
+        END;                                              
+      END;  
+
+   /* Poziv odabrane aplikacije */
+   EXEC CICS XCTL          
+      PROGRAM (SEL_APP)  
+      COMMAREA (COMMAREA)
+      LENGTH (COMMLEN);       
+
+   /* Procedura handla krivi unos */
+   NOT_FOUND:PROC;                                               
+    /* AUTOMATSKO IZAZIVANJE ERRORA KOD KRIVOG UNOSA */          
+    IF UNOS01I = 'XX' THEN UNOS01L = -1;                         
+    /* ISPIS ERRORA U POLJE ZA PORUKE */                         
+    IMSG1O = 'KRIVI UNOS OPCIJE, UNESITE BROJCANU VRIJEDNOST.';  
+    CALL SEND_MAP;                                               
+   END NOT_FOUND;                                                
+
+    /* procedura koja forsira krivi unos */
+   IO_ERROR:PROC;                                         
+    UNOS01L = -1;                                         
+    IMSG1O = 'POGRESAN UNOS - PONOVNO UNESITE OPCIJU.';   
+    CALL SEND_MAP;                                        
+   END IO_ERROR;                                        
+
+    /* Procedura koja šalje mapu na ekran. */
+   SEND_MAP:PROC;                                                               
+    IF ERFLAG1 <> 'Y' THEN UNOS01L = -1; 
+
+    /* SLANJE MAPE EKRANA I INICIJALIZACIJA KURSORA NA IC POLJE */
+    EXEC CICS SEND                                                
+              MAPSET('MAIN1M')                                    
+              MAP('MAIN1')                                        
+              FROM(MAIN01O)                                       
+              ERASE                                               
+              FREEKB                                              
+              CURSOR;                                                           
+   END SEND_MAP;                   
+
+    /* Procedura koja završava transakciju. */
+   FINAL_RETURN:PROC;                            
+    EXEC CICS SEND          
+              FROM(MAIN01O) 
+              ERASE         
+              LENGTH(0);    
+                            
+    EXEC CICS RETURN;                                
+   END FINAL_RETURN;                                                     
+
+ end MAINP;
