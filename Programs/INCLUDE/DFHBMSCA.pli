@@ -1,0 +1,131 @@
+  DECLARE
+            (DFHBMPEM CHAR (1) INIT ('19'X)/* PRINTER EOM        @L2C*/
+            ,DFHBMPNL CHAR (1) INIT ('15'X)/* PRINTER NL             */
+            ,DFHBMPFF CHAR (1) INIT ('0C'X)/* PRINTER FF         @L2C*/
+            ,DFHBMPCR CHAR (1) INIT ('0D'X)/* PRINTER CR         @L2C*/
+            ,DFHBMASK CHAR (1) INIT ('0')  /* AUTO SKIP              */
+            ,DFHBMUNP CHAR (1) INIT (' ')  /* UNPROTECTED            */
+            ,DFHBMUNN CHAR (1) INIT ('&')  /* UNPROT + NUM           */
+            ,DFHBMPRO CHAR (1) INIT ('-')  /* PROTECTED              */
+            ,DFHBMBRY CHAR (1) INIT ('H')  /* BRIGHT                 */
+            ,DFHBMDAR CHAR (1) INIT ('<')  /* DARK                   */
+            ,DFHBMFSE CHAR (1) INIT ('A')  /* MDT SET                */
+            ,DFHBMPRF CHAR (1) INIT ('/')  /* PROT + MDT SET         */
+            ,DFHBMASF CHAR (1) INIT ('1')  /* ASKP+MDT               */
+            ,DFHBMASB CHAR (1) INIT ('8')  /* AUTO + BRIGHT          */
+            ,DFHBMPSO CHAR (1) INIT ('0E'X)/* SHIFT OUT          @L2C*/
+            ,DFHBMPSI CHAR (1) INIT ('0F'X)/* SHIFT IN           @L2C*/
+ /*  FIELD FLAG VALUE SET BY INPUT MAPPING                           */
+            ,DFHBMEOF CHAR (1) INIT ('80'X)/* FIELD ERASED       @L2C*/
+            ,DFHBMCUR CHAR (1) INIT ('02'X)/* CURSOR IN FIELD    @L2C*/
+ /*  FIELD DATA VALUE SET BY INPUT MAPPING                           */
+            ,DFHBMDET CHAR (1) INIT ('FF'X)/* FIELD DETECTED     @L2C*/
+ /*  CODE FOR SA ORDER                                               */
+            ,DFHSA    CHAR (1) INIT ('28'X)/* SA ORDER (X'28')   @L2C*/
+ /*  CODE FOR ERROR CODE                                             */
+            ,DFHERROR CHAR (1) INIT ('3F'X)/* ERROR CODE-X'3F'   @L2C*/
+ /*  EXTENDED ATTRIBUTE TYPE CODES                                   */
+            ,DFHCOLOR CHAR (1) INIT ('42'X)/* COLOR    (X'42')   @L2C*/
+            ,DFHPS    CHAR (1) INIT ('43'X)/* PS       (X'43')   @L2C*/
+            ,DFHHLT   CHAR (1) INIT ('41'X)/* HIGHLIGHT(X'41')   @L2C*/
+            ,DFH3270  CHAR (1) INIT ('C0'X)/* 3270     (X'C0')   @L2C*/
+            ,DFHVAL   CHAR (1) INIT ('A')  /* VALIDT'N (X'C1')       */
+            ,DFHOUTLN CHAR (1) INIT ('B')  /* OUTLINE                */
+            ,DFHBKTRN CHAR (1) INIT ('46'X)/* BACKGROUND         @L2C*/
+                                           /* TRANSP   (X'46')       */
+            ,DFHALL   CHAR (1) INIT ('00'X)/* ALL , RESET TO     @L2C*/
+                                           /* DEFAULT  (X'00')       */
+ /*  DEFAULT ATTRIBUTE CODE  - TO SET ATTRIBUTES IN MAPS             */
+            ,DFHDFT   CHAR (1) INIT ('FF'X)/* DEFAULT  (X'FF')   @L2C*/
+        ) STATIC INTERNAL;                                     /*@P2C*/
+  DECLARE                                                      /*@P2C*/
+ /*  COLOR ATTRIBUTE VALUES                                          */
+            (DFHDFCOL CHAR (1) INIT ('00'X)/* DEFAULT            @L2C*/
+            ,DFHBLUE  CHAR (1) INIT ('1')  /* BLUE                   */
+            ,DFHRED   CHAR (1) INIT ('2')  /* RED                    */
+            ,DFHPINK  CHAR (1) INIT ('3')  /* PINK                   */
+            ,DFHGREEN CHAR (1) INIT ('4')  /* GREEN                  */
+            ,DFHTURQ  CHAR (1) INIT ('5')  /* TURQUOISE              */
+            ,DFHYELLO CHAR (1) INIT ('6')  /* YELLOW                 */
+            ,DFHNEUTR CHAR (1) INIT ('7')  /* NEUTRAL                */
+ /*  BASE PS  ATTRIBUTE VALUE                                        */
+            ,DFHBASE  CHAR (1) INIT ('00'X)/* BASE PS            @L2C*/
+ /*  HIGHLIGHT ATTRIBUTE VALUES                                      */
+            ,DFHDFHI  CHAR (1) INIT ('00'X)/* NORMAL             @L2C*/
+            ,DFHBLINK CHAR (1) INIT ('1')  /* BLINK                  */
+            ,DFHREVRS CHAR (1) INIT ('2')  /* REVERSE VIDEO          */
+            ,DFHUNDLN CHAR (1) INIT ('4')  /* UNDERSCORE             */
+ /*  VALIDATION ATTRIBUTE VALUES                                     */
+            ,DFHMFIL  CHAR (1) INIT ('04'X)/* MANDATORY FILL     @L2C*/
+            ,DFHMENT  CHAR (1) INIT ('02'X)/* MANDATORY ENTER    @L2C*/
+            ,DFHMFE   CHAR (1) INIT ('06'X)/* MANDATORY FILL+    @L2C*/
+                                           /*  MANDATORY ENTER       */
+ /*  ADDITIONAL ATTRIBUTES                                           */
+            ,DFHUNNOD CHAR (1) INIT ('(')  /* UNPROTECTED            */
+                                           /* NON-DISPLAY            */
+                                           /* NON-PRINT              */
+                                           /* NON-DETECTABLE         */
+                                           /* MDT                    */
+ 
+            ,DFHUNIMD CHAR (1) INIT ('I')  /* UNPROTECTED            */
+                                           /* INTENSIFY              */
+                                           /* LIGHT PEN DET.         */
+                                           /* MDT                    */
+ 
+            ,DFHUNNUM CHAR (1) INIT ('J')  /* UNPROTECTED            */
+                                           /* NUMERIC                */
+                                           /* MDT                    */
+ 
+            ,DFHUNNUB CHAR (1) INIT ('Q')  /* UNPROTECTED        @01A*/
+                                           /* NUMERIC            @01A*/
+                                           /* INTENSIFY          @01A*/
+                                           /* LIGHT PEN DET.     @01A*/
+                                           /*                    @01A*/
+            ,DFHUNINT CHAR (1) INIT ('R')  /* UNPROTECTED            */
+                                           /* NUMERIC                */
+                                           /* INTENSIFY              */
+                                           /* LIGHT PEN DET.         */
+                                           /* MDT                    */
+ 
+            ,DFHUNNON CHAR (1) INIT (')')  /* UNPROTECTED            */
+                                           /* NUMERIC                */
+                                           /* NON-DISPLAY            */
+                                           /* NON-PRINT              */
+                                           /* NON-DETECTABLE         */
+                                           /* MDT                    */
+ 
+            ,DFHPROTI CHAR (1) INIT ('Y')  /* PROTECTED              */
+                                           /* INTENSIFY              */
+                                           /* LIGHT PEN DET.         */
+ 
+            ,DFHPROTN CHAR (1) INIT ('%')  /* PROTECTED              */
+                                           /* NON-DISPLAY            */
+                                           /* NON-PRINT              */
+                                           /* NON-DETECTABLE         */
+            ,DFHMT    CHAR (1) INIT ('01'X)/* TRIGGER            @L2C*/
+            ,DFHMFT   CHAR (1) INIT ('05'X)/* MANDATORY FILL+    @L2C*/
+                                           /* TRIGGER                */
+            ,DFHMET   CHAR (1) INIT ('03'X)/* MANDATORY ENTER+   @L2C*/
+                                           /* TRIGGER                */
+            ,DFHMFET  CHAR (1) INIT ('07'X)/* MANDATORY FILL+    @L2C*/
+                                           /* MANDATORY ENTER+       */
+                                           /* TRIGGER                */
+        ) STATIC INTERNAL;                                    /* @P1C*/
+  DECLARE
+ /*  FIELD OUTLINING ATTRIBUTE CODES       KJ0001                    */
+            (DFHDFFR  CHAR (1) INIT ('00'X)/* DEFAULT OUTLINE    @L2C*/
+            ,DFHLEFT  CHAR (1) INIT ('08'X)/* LEFT               @L2C*/
+            ,DFHOVER  CHAR (1) INIT ('04'X)/* OVERLINE           @L2C*/
+            ,DFHRIGHT CHAR (1) INIT ('02'X)/* RIGHT              @L2C*/
+            ,DFHUNDER CHAR (1) INIT ('01'X)/* UNDER              @L2C*/
+            ,DFHBOX   CHAR (1) INIT ('0F'X)/* LEFT+OVER+RIGHT+   @L2C*/
+                                           /* UNDER LINES            */
+ /*  SOSI ATTRIBUTE CODES                                            */
+            ,DFHSOSI  CHAR (1) INIT ('01'X)/* SOSI = YES         @L2C*/
+ /*  BACKGROUND TRANSPARENCY ATTRIBUTE CODES                         */
+            ,DFHTRANS CHAR (1) INIT ('0')  /* TRANSP = YES           */
+            ,DFHOPAQ  CHAR (1) INIT ('FF'X)/* TRANSP = NO        @L2C*/
+        ) STATIC INTERNAL;                                    /* @P1C*/
+ /********************************************************************/
+ /*                  END OF ATTRIBUTES LIST                          */
+ /********************************************************************/
