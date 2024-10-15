@@ -1,0 +1,137 @@
+ MENUP: PROC OPTIONS(MAIN);
+ %INCLUDE DFHAID;
+ %INCLUDE DFHBMSCA;
+ %INCLUDE MENU1M;
+
+ DCL MENU1M CHAR(7) INIT('MENU1M');
+ DCL MENU01 CHAR(6) INIT('MENU01');
+ DCL MESSAGE CHAR(19) INIT('Exiting application');
+ DCL WS_COMMAREA CHAR(1);
+
+ CALL INIT_MAP();
+ CALL DISP_SCR();
+
+ /* Call the input processing procedure */
+ CALL PROC_ENT();
+
+ DISP_SCR: PROC();
+  EXEC CICS SEND MAP(MENU01) MAPSET(MENU1M)
+   FROM(MENU01O)
+   TERMINAL
+   WAIT
+   FREEKB;
+ END DISP_SCR;
+
+ PROC_ENT: PROC();
+
+  DO FOREVER;
+
+   /* Wait for user input */
+   EXEC CICS RECEIVE MAP(MENU01) MAPSET(MENU1M) INTO(MENU01I);
+
+   /* Check which key was pressed */
+   IF EIBAID = DFHPF3 THEN DO;
+    /* PF3 pressed, exit transaction */
+    EXEC CICS SEND TEXT FROM(MESSAGE) ERASE;
+    EXEC CICS RETURN;
+   END;
+   ELSE IF EIBAID = DFHPF5 THEN DO;
+    /* PF5 pressed, refresh screen */
+    CALL INIT_MAP();
+    CALL DISP_SCR();
+    ITERATE; /* Continue to next iteration to wait for input */
+   END;
+   ELSE IF EIBAID = DFHENTER THEN DO;
+    /* Enter key pressed, process input */
+
+    /* Using IF statements to handle options */
+    IF MENU01I.UNOS01I = '02' THEN
+     CALL OPT_02;
+    ELSE IF MENU01I.UNOS01I = '03' THEN
+     CALL OPT_03;
+    ELSE IF MENU01I.UNOS01I = '04' THEN
+     CALL OPT_04;
+    ELSE IF MENU01I.UNOS01I = '05' THEN
+     CALL OPT_05;
+    ELSE IF MENU01I.UNOS01I = '06' THEN
+     CALL OPT_06;
+    ELSE IF MENU01I.UNOS01I = '07' THEN
+     CALL OPT_07;
+    ELSE IF MENU01I.UNOS01I = '08' THEN
+     CALL OPT_08;
+    ELSE IF MENU01I.UNOS01I = '09' THEN
+     CALL OPT_09;
+    ELSE IF MENU01I.UNOS01I = '10' THEN
+     CALL OPT_10;
+    ELSE
+     CALL INV_OPT;
+
+    CALL DISP_SCR;
+    /* Loop back to receive more input */
+   END;
+   ELSE DO;
+    /* Any other key pressed, ignore and redisplay map */
+    CALL DISP_SCR;
+   END;
+
+  END; /* End of DO WHILE loop */
+
+ END PROC_ENT;
+
+ /* Option handling */
+ OPT_02: PROC();
+    MENU01O.INFO1O = 'Prikaz inventara';
+ END OPT_02;
+
+ OPT_03: PROC();
+    MENU01O.INFO1O = 'Uredi (ZA BRISANJE PODATAKA)';
+ END OPT_03;
+
+ OPT_04: PROC();
+    MENU01O.INFO1O = 'Novi korisnik - Opcija jos nije implementirana';
+ END OPT_04;
+
+ OPT_05: PROC();
+    MENU01O.INFO1O = 'Novi autor - Opcija jos nije implementirana';
+ END OPT_05;
+
+ OPT_06: PROC();
+    MENU01O.INFO1O = 'Novi dobavljac - Opcija jos nije implementirana';
+ END OPT_06;
+
+ OPT_07: PROC();
+    MENU01O.INFO1O = 'Rezervacije - Opcija jos nije implementirana';
+ END OPT_07;
+
+ OPT_08: PROC();
+    MENU01O.INFO1O = 'Nova knjiga - Opcija jos nije implementirana';
+ END OPT_08;
+
+ OPT_09: PROC();
+    MENU01O.INFO1O = 'Clanarine - Opcija jos nije implementirana';
+ END OPT_09;
+
+ OPT_10: PROC();
+    MENU01O.INFO1O = 'Posudba - Opcija jos nije implementirana';
+ END OPT_10;
+
+ INV_OPT: PROC();
+ MENU01O.INFO1O = 'Nevazeca opcija. Molimo unesite ponuđeni broj';
+ END INV_OPT;
+
+ INIT_MAP: PROC();
+  MENU01O.OPIS2O = '02-Prikaz inventara';
+  MENU01O.OPIS3O = '03-Uredi (ZA BRISANJE PODATAKA)';
+  MENU01O.OPIS4O = '04-Novi korisnik';
+  MENU01O.OPIS5O = '05-Novi autor';
+  MENU01O.OPIS6O = '06-Novi dobavljac';
+  MENU01O.OPIS7O = '07-Rezervacije';
+  MENU01O.OPIS8O = '08-Nova knjiga';
+  MENU01O.OPIS9O = '09-Clanarine';
+  MENU01O.OPIS10O = '10-Posudba';
+  MENU01O.INFOO = 'INFO:';
+  MENU01O.INFO1O = 'Unos opcije ... ';
+  MENU01O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
+ END INIT_MAP;
+
+ END MENUP;
