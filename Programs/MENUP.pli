@@ -1,4 +1,5 @@
  MENUP: PROC OPTIONS(MAIN);
+
  %INCLUDE DFHAID;
  %INCLUDE DFHBMSCA;
  %INCLUDE MENU1M;
@@ -6,7 +7,8 @@
  DCL MENU1M CHAR(7) INIT('MENU1M');
  DCL MENU01 CHAR(6) INIT('MENU01');
  DCL MESSAGE CHAR(19) INIT('Exiting application');
- DCL WS_COMMAREA CHAR(1);
+ DCL COMMAREA CHAR(1);
+ DCL RESPONSE FIXED BINARY(31);
 
  CALL INIT_MAP();
  CALL DISP_SCR();
@@ -15,76 +17,89 @@
  CALL PROC_ENT();
 
  DISP_SCR: PROC();
+  RESPONSE = 0;
   EXEC CICS SEND MAP(MENU01) MAPSET(MENU1M)
    FROM(MENU01O)
    TERMINAL
    WAIT
-   FREEKB;
+   FREEKB
+   RESP(RESPONSE);
+
+   IF RESPONSE <> 0 THEN DO;
+    MENU01O.INFO1O = 'Send Error.';
+    EXEC CICS SEND TEXT FROM(MENU01O.INFO1O) ERASE;
+    EXEC CICS RETURN;
+   END;
+
  END DISP_SCR;
 
  PROC_ENT: PROC();
 
-  DO FOREVER;
+  RESPONSE = 0;
+  PETLJA:DO FOREVER;
 
    /* Wait for user input */
-   EXEC CICS RECEIVE MAP(MENU01) MAPSET(MENU1M) INTO(MENU01I);
+   EXEC CICS RECEIVE
+             MAP(MENU01)
+             MAPSET(MENU1M)
+             INTO(MENU01I)
+             RESP(RESPONSE);
 
-   /* Check which key was pressed */
-   IF EIBAID = DFHPF3 THEN DO;
-    /* PF3 pressed, exit transaction */
-    EXEC CICS SEND TEXT FROM(MESSAGE) ERASE;
+   IF RESPONSE <> 0 THEN DO;
+    MENU01O.INFO1O = 'Recieve Error.';
+    EXEC CICS SEND TEXT FROM(MENU01O.INFO1O) ERASE;
     EXEC CICS RETURN;
    END;
-   ELSE IF EIBAID = DFHPF5 THEN DO;
-    /* PF5 pressed, refresh screen */
-    CALL INIT_MAP();
-    CALL DISP_SCR();
-    ITERATE; /* Continue to next iteration to wait for input */
-   END;
-   ELSE IF EIBAID = DFHENTER THEN DO;
-    /* Enter key pressed, process input */
 
-    /* Using IF statements to handle options */
-    IF MENU01I.UNOS01I = '02' THEN
-     CALL OPT_02;
-    ELSE IF MENU01I.UNOS01I = '03' THEN
-     CALL OPT_03;
-    ELSE IF MENU01I.UNOS01I = '04' THEN
-     CALL OPT_04;
-    ELSE IF MENU01I.UNOS01I = '05' THEN
-     CALL OPT_05;
-    ELSE IF MENU01I.UNOS01I = '06' THEN
-     CALL OPT_06;
-    ELSE IF MENU01I.UNOS01I = '07' THEN
-     CALL OPT_07;
-    ELSE IF MENU01I.UNOS01I = '08' THEN
-     CALL OPT_08;
-    ELSE IF MENU01I.UNOS01I = '09' THEN
-     CALL OPT_09;
-    ELSE IF MENU01I.UNOS01I = '10' THEN
-     CALL OPT_10;
-    ELSE
-     CALL INV_OPT;
+   SELECT(EIBAID);
+    WHEN('3') DO;
+        EXEC CICS SEND TEXT FROM(MESSAGE) ERASE;
+        EXEC CICS RETURN;
+    END;
+    WHEN('5') DO;
+     CALL INIT_MAP();
+     CALL DISP_SCR();
+     ITERATE;
+    END;
+    WHEN(DFHPF3) DO;
+     EXEC CICS SEND TEXT FROM(MESSAGE) ERASE;
+     EXEC CICS RETURN;
+    END;
+    WHEN(DFHPF5) DO;
+     CALL INIT_MAP();
+     CALL DISP_SCR();
+     ITERATE;
+    END;
+    WHEN(DFHENTER) DO;
+     IF MENU01I.UNOS01I = '02' THEN CALL OPT_02;
+     ELSE IF MENU01I.UNOS01I = '03' THEN CALL OPT_03;
+     ELSE IF MENU01I.UNOS01I = '04' THEN CALL OPT_04;
+     ELSE IF MENU01I.UNOS01I = '05' THEN CALL OPT_05;
+     ELSE IF MENU01I.UNOS01I = '06' THEN CALL OPT_06;
+     ELSE IF MENU01I.UNOS01I = '07' THEN CALL OPT_07;
+     ELSE IF MENU01I.UNOS01I = '08' THEN CALL OPT_08;
+     ELSE IF MENU01I.UNOS01I = '09' THEN CALL OPT_09;
+     ELSE IF MENU01I.UNOS01I = '10' THEN CALL OPT_10;
+     ELSE CALL INV_OPT;
 
-    CALL DISP_SCR;
-    /* Loop back to receive more input */
-   END;
-   ELSE DO;
-    /* Any other key pressed, ignore and redisplay map */
-    CALL DISP_SCR;
+     CALL DISP_SCR;
+    END;
+    OTHERWISE DO;
+      CALL DISP_SCR;
+    END;
    END;
 
-  END; /* End of DO WHILE loop */
+  END PETLJA;
 
  END PROC_ENT;
 
  /* Option handling */
  OPT_02: PROC();
-    MENU01O.INFO1O = 'Prikaz inventara';
+   MENU01O.INFO1O = 'Prikaz inventara - Opcija jos nije implementirana';
  END OPT_02;
 
  OPT_03: PROC();
-    MENU01O.INFO1O = 'Uredi (ZA BRISANJE PODATAKA)';
+    MENU01O.INFO1O = 'Uredi - Opcija jos nije implementirana';
  END OPT_03;
 
  OPT_04: PROC();
