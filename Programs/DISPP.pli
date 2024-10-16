@@ -1,0 +1,191 @@
+ DISPP:PROC OPTIONS(MAIN);
+
+  %INCLUDE DFHAID;   /* Key polje */
+  %INCLUDE DFHBMSCA; /* Aid polja */
+  %INCLUDE DISP1M;   /* Mapset    */
+
+  EXEC SQL INCLUDE SQLCA;
+  EXEC SQL INCLUDE KNJIGEV;
+  EXEC SQL INCLUDE AUTORIV;
+  EXEC SQL INCLUDE DOBAVLJV;
+  EXEC SQL INCLUDE NABAVAV;
+  EXEC SQL INCLUDE POSUDBAV;
+  EXEC SQL INCLUDE ZAKASV;
+  EXEC SQL INCLUDE REZERVV;
+
+  DCL DISP1M CHAR(7) INIT('DISP1M');
+  DCL DISP1  CHAR(6) INIT('DISP1');
+  DCL MENUP  CHAR(5) INIT('MENUP');
+
+  DCL RESPONSE FIXED BINARY(31);
+
+   /* SQL HOST VARIABLE */
+  DCL HVRSTA CHAR(20);
+  DCL HID FIXED BINARY(31);
+
+  CALL MAIN_LOOP();
+
+  MAIN_LOOP:PROC;
+
+    CALL INIT_MAP();
+
+    PETLJA:DO FOREVER;
+        CALL DISP_SCR();
+        CALL HANDLE_INPUT();
+
+        IF EIBAID = DFHPF3 THEN DO;
+            EXEC CICS XCTL PROGRAM(MENUP);
+        END;
+
+        IF EIBAID = DFHPF5 THEN DO;
+            CALL INIT_MAP();
+            ITERATE;
+        END;
+
+    END PETLJA;
+
+  END MAIN_LOOP;
+
+  HANDLE_INPUT:PROC;
+
+   EXEC CICS RECEIVE MAP(DISP1) MAPSET(DISP1M)
+              INTO(DISP1I)
+              RESP(RESPONSE);
+
+   IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+     IF EIBAID <> DFHENTER THEN RETURN;
+     DISP1O.INFO1BO = 'Receive Error.';
+     EXEC CICS SEND TEXT FROM(DISP1O.INFO1BO) ERASE;
+     EXEC CICS RETURN;
+   END;
+   IF EIBAID = DFHENTER THEN DO;
+     CALL PROC_IN();
+   END;
+
+  END HANDLE_INPUT;
+
+  PROC_IN:PROC;
+
+   HVRSTA = '';
+   HID = 0;
+
+   HVRSTA = SCRUBOUT(DISP1I.UNOS01I,' ');
+   HID = DISP1I.ID001BI;
+
+   /* Validate input */
+   IF HVRSTA = '' THEN DO;
+     DISP1O.INFO1BO = 'Molimo unesite vrstu.';
+     RETURN;
+   END;
+
+   IF HID = 0 THEN DO;
+     DISP1O.INFO1BO = 'Molimo unesite valjan ID.';
+     RETURN;
+   END;
+
+     /* Odredjivanje na koju tablicu se radi upit */
+   SELECT (HVRSTA);
+     WHEN ('KNJIGE')       CALL OPT_KNJ;
+     WHEN ('DOBAVLJACI')   CALL OPT_DOB;
+     WHEN ('AUTORI')       CALL OPT_AUT;
+     WHEN ('CLANOVI')      CALL OPT_CLA;
+     WHEN ('POSUDBA')      CALL OPT_POS;
+     WHEN ('REZERVACIJA')  CALL OPT_REZ;
+     WHEN ('ZAKASNINA')    CALL OPT_ZAK;
+     OTHERWISE DO;
+       DISP1O.INFO1BO = 'Neispravna vrsta. Ponovite unos.';
+       RETURN;
+     END;
+   END;
+
+  END PROC_IN;
+
+   /* PRIKAZIJE EKRAN */
+  DISP_SCR:PROC;
+
+   EXEC CICS SEND MAP(DISP1) MAPSET(DISP1M)
+    FROM(DISP1O)
+    ERASE
+    RESP(RESPONSE);
+
+   IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+     DISP1O.INFO1BO = 'Send Error.';
+     EXEC CICS SEND TEXT FROM(DISP1O.INFO1BO) ERASE;
+     EXEC CICS RETURN;
+   END;
+
+  END DISP_SCR;
+
+ OPT_KNJ: PROC;
+   EXEC SQL
+     SELECT NAZIV, AUTOR, KATGRJ, GODIZD, BRKNJ
+     INTO :KNJIGE.ID,
+          :KNJIGE.NAZIV,
+          :KNJIGE.AUTOR,
+          :KNJIGE.KATGRJ,
+          :KNJIGE.GODIZD,
+          :KNJIGE.BRKNJ
+     FROM IBMUSER.VIEW_KNJIGE
+     WHERE ID = :HID;
+
+   IF SQLCODE = 0 THEN DO;
+     CALL DISP_KNJ;
+   END;
+   ELSE IF SQLCODE = 100 THEN DO;
+     DISP1O.INFO1BO = 'Nema podataka za uneseni ID.';
+   END;
+   ELSE DO;
+     DISP1O.INFO1BO = 'SQL Error: ' || SCRUBOUT(CHAR(SQLCODE),' ');
+   END;
+ END OPT_KNJ;
+
+ DISP_KNJ: PROC;
+   DISP1O.OUTPF1O = 'Naziv: ' || KNJIGE.NAZIV;
+   DISP1O.OUTPF2O = 'Autor: ' || KNJIGE.AUTOR;
+   DISP1O.OUTPF3O = 'Kategorija: ' || KNJIGE.KATGRJ;
+   DISP1O.OUTPF4O = 'Godina izdanja: ' || CHAR(KNJIGE.GODIZD);
+   DISP1O.OUTPF5O = 'Broj knjiga: ' || CHAR(KNJIGE.BRKNJ);
+   DISP1O.INFO1BO = 'Podaci o knjizi uspjesno dohvaceni.';
+ END DISP_KNJ;
+
+  INIT_MAP: PROC;
+   DISP1O.UNOS01O = '';
+   DISP1O.ID001BO = '';
+   DISP1O.OPIS1AO = '(KNJIGE,DOBAVLJACI,AUTORI,CLANOVI,POSUDBA,';
+   DISP1O.OPIS1BO = 'REZERVACIJA,POSUDBA,ZAKASNINA';
+   DISP1O.OPIS2O = '(ID VRSTE)';
+   DISP1O.OUTPF1O = '';
+   DISP1O.OUTPF2O = '';
+   DISP1O.OUTPF3O = '';
+   DISP1O.OUTPF4O = '';
+   DISP1O.OUTPF5O = '';
+   DISP1O.INFO1AO = 'INFO:';
+   DISP1O.INFO1BO = 'Unesite vrstu i ID za prikaz inventara.';
+   DISP1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,ENTER-POTVRDA';
+  END INIT_MAP;
+
+ OPT_DOB: PROC;
+    DISP1O.INFO1BO = 'Opcija DOBAVLJACI nije implementirana.';
+ END;
+
+ OPT_AUT: PROC;
+    DISP1O.INFO1BO = 'Opcija AUTORI nije implementirana.';
+ END;
+
+ OPT_CLA: PROC;
+    DISP1O.INFO1BO = 'Opcija CLANOVI nije implementirana.';
+ END;
+
+ OPT_POS: PROC;
+    DISP1O.INFO1BO = 'Opcija POSUDBA nije implementirana.';
+ END;
+
+ OPT_REZ: PROC;
+    DISP1O.INFO1BO = 'Opcija REZERVACIJA nije implementirana.';
+ END;
+
+ OPT_ZAK: PROC;
+    DISP1O.INFO1BO = 'Opcija ZAKASNINA nije implementirana.';
+ END;
+
+ END DISPP;

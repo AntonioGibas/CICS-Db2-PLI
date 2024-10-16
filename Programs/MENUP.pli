@@ -43,6 +43,7 @@
       EXEC CICS SEND TEXT FROM(MENU01O.INFO1O) ERASE;
       EXEC CICS RETURN;
     END;
+
   END DISP_SCR;
 
   HANDLE_INPUT: PROC;
@@ -93,7 +94,24 @@
 
   /* Option handling procedures */
   OPT_02: PROC;
-   MENU01O.INFO1O = 'Prikaz inventara - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Prikaz inventara.';
+
+   EXEC CICS XCTL PROGRAM('DISPP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program DISPP nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: DISPP program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva Prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
+
   END OPT_02;
 
  OPT_03: PROC();
