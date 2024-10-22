@@ -115,7 +115,23 @@
   END OPT_02;
 
  OPT_03: PROC();
-    MENU01O.INFO1O = 'Uredi - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Edit mode.';
+
+   EXEC CICS XCTL PROGRAM('EDITP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program EDITP nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: EDITP program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
  END OPT_03;
 
  OPT_04: PROC();
@@ -179,19 +195,83 @@
  END OPT_06;
 
  OPT_07: PROC();
-    MENU01O.INFO1O = 'Rezervacije - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Dodavanje nove rezervacije.';
+
+   EXEC CICS XCTL PROGRAM('NREZEP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program NREZEP nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: NREZEP program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
  END OPT_07;
 
  OPT_08: PROC();
-    MENU01O.INFO1O = 'Nova knjiga - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Dodavanje nove knjige.';
+
+   EXEC CICS XCTL PROGRAM('NUBKP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program NUBKP nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: NUBKP program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
  END OPT_08;
 
  OPT_09: PROC();
-    MENU01O.INFO1O = 'Clanarine - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Uplata clanarine.';
+
+   EXEC CICS XCTL PROGRAM('MEMPP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program MEMPP nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: MEMPP program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
  END OPT_09;
 
  OPT_10: PROC();
-    MENU01O.INFO1O = 'Posudba - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Posudba knjiga.';
+
+   EXEC CICS XCTL PROGRAM('POSUDP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program POSUDP nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: POSUDP program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
  END OPT_10;
 
   INV_OPT: PROC;

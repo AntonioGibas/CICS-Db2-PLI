@@ -1,0 +1,117 @@
+ POSUDP: PROC OPTIONS(MAIN);
+
+  %INCLUDE DFHAID;
+  %INCLUDE DFHBMSCA;
+  %INCLUDE POSUD1M;
+
+  EXEC SQL INCLUDE SQLCA;
+  EXEC SQL INCLUDE POSUDBAV;
+
+  DCL POSUD1M CHAR(7) INIT('POSUD1M');
+  DCL POSUD01 CHAR(6) INIT('POSUD1');
+  DCL COMMAREA CHAR(1);
+  DCL RESPONSE FIXED BINARY(31);
+
+  CALL INIT_MAP();
+  CALL MAIN_LOOP();
+
+  MAIN_LOOP: PROC;
+    DO FOREVER;
+      CALL DISP_SCR();
+      CALL HANDLE_AID();
+
+      /* Process based on AID key pressed */
+      SELECT(EIBAID);
+        WHEN(DFHPF3) DO;  /* Return to menu */
+          EXEC CICS XCTL PROGRAM('MENUP')
+               RESP(RESPONSE);
+        END;
+        WHEN(DFHPF5) DO;  /* Refresh screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHCLEAR) DO;  /* Clear screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHENTER) DO;  /* Process input */
+          CALL PROCESS_INPUT();
+        END;
+        OTHERWISE;
+      END;
+    END;
+  END MAIN_LOOP;
+
+  DISP_SCR: PROC;
+    /* Send map to terminal */
+    EXEC CICS SEND MAP(POSUD01) MAPSET(POSUD1M)
+         FROM(POSUD1O)
+         ERASE
+         CURSOR(1)
+         RESP(RESPONSE);
+
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      POSUD1O.INFO1BO = 'Greska pri prikazu ekrana.';
+      EXEC CICS SEND TEXT FROM(POSUD1O.INFO1BO) ERASE;
+      EXEC CICS RETURN;
+    END;
+
+    /* Receive input from terminal */
+    EXEC CICS RECEIVE MAP(POSUD01) MAPSET(POSUD1M)
+         INTO(POSUD1I)
+         RESP(RESPONSE);
+  END DISP_SCR;
+
+  HANDLE_AID: PROC;
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      IF EIBAID = DFHCLEAR | EIBAID = DFHPF3 |
+         EIBAID = DFHPF5 THEN RETURN;
+
+      POSUD1O.INFO1BO = 'Greska pri citanju unosa.';
+      CALL DISP_SCR();
+      EXEC CICS RETURN;
+    END;
+  END HANDLE_AID;
+
+  PROCESS_INPUT: PROC;
+    POSUD1O.INFO1BO = 'Unos je u obradi...';
+  END PROCESS_INPUT;
+
+  INIT_MAP: PROC;
+    /* Initialize screen fields */
+    POSUD1O.NASLOV1O = 'POSUD1';
+    POSUD1O.NASLOV2O = 'POSUDBA KNJIGA';
+    POSUD1O.NASLOV3O = 'UNOS ID-A KNJIGE (SKENIRAJTI NA POLEDJINI)';
+    POSUD1O.NASLOV4O = 'I ID KORISNIKA (SKRENIRATI ISKAZNICU)';
+
+    POSUD1O.KNJID1O = 'IDKNJ:';
+    POSUD1O.UNOSP1O = (5)'_';     /* Book ID field */
+    POSUD1O.IDKOR1O = 'IDKOR:';
+    POSUD1O.UNIKR1O = (5)'_';     /* User ID field */
+    POSUD1O.DATPOS1O = 'DATPOS:';
+    POSUD1O.UNDPOS1O = (8)'_';    /* Date field */
+    POSUD1O.OPDOD1O = '(DD/MM/GGGG)';
+
+    POSUD1O.INFO1AO = 'INFO:';
+    POSUD1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';
+    POSUD1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
+
+    /* Set input field attributes */
+    POSUD1O.UNOSP1A = DFHBMFSE; /* Book ID - unprotected, highlighted */
+    POSUD1O.UNIKR1A = DFHBMFSE; /* User ID - unprotected, highlighted */
+    POSUD1O.UNDPOS1A = DFHBMFSE; /* Date - unprotected, highlighted */
+
+    /* Set output field attributes */
+    POSUD1O.NASLOV1A = DFHBMPRO;  /* Headers - protected */
+    POSUD1O.NASLOV2A = DFHBMPRO;
+    POSUD1O.NASLOV3A = DFHBMPRO;
+    POSUD1O.NASLOV4A = DFHBMPRO;
+    POSUD1O.KNJID1A = DFHBMPRO;
+    POSUD1O.IDKOR1A = DFHBMPRO;
+    POSUD1O.DATPOS1A = DFHBMPRO;
+    POSUD1O.OPDOD1A = DFHBMPRO;
+    POSUD1O.INFO1AA = DFHBMPRO;
+    POSUD1O.INFO1BA = DFHBMPRO;
+  END INIT_MAP;
+
+ END POSUDP;

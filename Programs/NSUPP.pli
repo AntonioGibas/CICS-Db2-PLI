@@ -86,11 +86,11 @@
     NSUPP1O.NASLOV4O = 'UNESI SVA OSTALA POLJA!';
 
     NSUPP1O.IDUNOSO = 'ID:';
-    NSUPP1O.ID00001O = '';  /* Will be auto-generated */
+    NSUPP1O.ID00001O = (5)'_';  /* Will be auto-generated */
     NSUPP1O.NAZIV1O = 'NAZIV:';
-    NSUPP1O.UNOSP1O = '';
+    NSUPP1O.UNOSP1O = (60)'_';
     NSUPP1O.KONTBR1O = 'KONTBR:';
-    NSUPP1O.UKONT1O = '';
+    NSUPP1O.UKONT1O = (5)'_';
 
     NSUPP1O.INFO1AO = 'INFO:';
     NSUPP1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';

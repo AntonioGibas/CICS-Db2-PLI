@@ -83,11 +83,11 @@
     NAUTH1O.NASLOV4O = 'UNESI SVA OSTALA POLJA!';
 
     NAUTH1O.IDUNOSO = 'ID:';
-    NAUTH1O.ID00001O = '';  /* Will be auto-generated */
+    NAUTH1O.ID00001O = (5)'_';  /* Will be auto-generated */
     NAUTH1O.PREZ01O = 'PREZIME:';
-    NAUTH1O.UNOSP1O = '';
+    NAUTH1O.UNOSP1O = (60)'_';
     NAUTH1O.IME001O = 'IME:';
-    NAUTH1O.UNIME1O = '';
+    NAUTH1O.UNIME1O = (60)'_';
 
     NAUTH1O.INFO1AO = 'INFO:';
     NAUTH1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';
