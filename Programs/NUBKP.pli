@@ -74,7 +74,6 @@
   END HANDLE_AID;
 
   PROCESS_INPUT: PROC;
-    /* Here we'll add input validation and processing logic later */
     NBOOK1O.INFO1BO = 'Unos je u obradi...';
   END PROCESS_INPUT;
 
