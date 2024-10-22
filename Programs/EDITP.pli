@@ -1,0 +1,124 @@
+ EDITP: PROC OPTIONS(MAIN);
+
+  %INCLUDE DFHAID;
+  %INCLUDE DFHBMSCA;
+  %INCLUDE EDIT1M;
+
+  EXEC SQL INCLUDE SQLCA;
+  EXEC SQL INCLUDE AUTORIV;
+  EXEC SQL INCLUDE CLANOVIV;
+  EXEC SQL INCLUDE DOBAVLJV;
+  EXEC SQL INCLUDE KNJIGEV;
+  EXEC SQL INCLUDE NABAVAV;
+  EXEC SQL INCLUDE POSUDBAV;
+  EXEC SQL INCLUDE ZAKASV;
+
+  DCL EDIT1M CHAR(7) INIT('EDIT1M');
+  DCL EDIT01 CHAR(6) INIT('EDIT1');
+  DCL COMMAREA CHAR(1);
+  DCL RESPONSE FIXED BINARY(31);
+
+  CALL INIT_MAP();
+  CALL MAIN_LOOP();
+
+  MAIN_LOOP: PROC;
+    DO FOREVER;
+      CALL DISP_SCR();
+      CALL HANDLE_AID();
+
+      /* Process based on AID key pressed */
+      SELECT(EIBAID);
+        WHEN(DFHPF3) DO;  /* Return to menu */
+          EXEC CICS XCTL PROGRAM('MENUP')
+               RESP(RESPONSE);
+        END;
+        WHEN(DFHPF5) DO;  /* Refresh screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHCLEAR) DO;  /* Clear screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHENTER) DO;  /* Process input */
+          CALL PROCESS_INPUT();
+        END;
+        OTHERWISE;
+      END;
+    END;
+  END MAIN_LOOP;
+
+  DISP_SCR: PROC;
+    /* Send map to terminal */
+    EXEC CICS SEND MAP(EDIT01) MAPSET(EDIT1M)
+         FROM(EDIT1O)
+         ERASE
+         CURSOR(1)
+         RESP(RESPONSE);
+
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      EDIT1O.INFO1BO = 'Greska pri prikazu ekrana.';
+      EXEC CICS SEND TEXT FROM(EDIT1O.INFO1BO) ERASE;
+      EXEC CICS RETURN;
+    END;
+
+    /* Receive input from terminal */
+    EXEC CICS RECEIVE MAP(EDIT01) MAPSET(EDIT1M)
+         INTO(EDIT1I)
+         RESP(RESPONSE);
+  END DISP_SCR;
+
+  HANDLE_AID: PROC;
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      IF EIBAID = DFHCLEAR | EIBAID = DFHPF3 |
+         EIBAID = DFHPF5 THEN RETURN;
+
+      EDIT1O.INFO1BO = 'Greska pri citanju unosa.';
+      CALL DISP_SCR();
+      EXEC CICS RETURN;
+    END;
+  END HANDLE_AID;
+
+  PROCESS_INPUT: PROC;
+    /* Here we'll add record searching and display logic later */
+    EDIT1O.INFO1BO = 'Trazenje zapisa...';
+  END PROCESS_INPUT;
+
+  INIT_MAP: PROC;
+    /* Initialize screen fields */
+    EDIT1O.VRSTA1O = 'VRSTA:';
+    EDIT1O.UNOS01O = (11)'_';
+    EDIT1O.OPIS1AO = 'KNJIGE,DOBAVLJACI,AUTORI,CLANOVI,POSUDBA,';
+    EDIT1O.OPIS1BO = 'REZERVACIJA,POSUDBA,ZAKASNINA';
+
+    EDIT1O.ID001AO = 'ID   :';
+    EDIT1O.ID001BO = (5)'_';
+    EDIT1O.OPIS2O = '(ID VRSTE)';
+
+    EDIT1O.OUTPF1O = (60)'_';
+    EDIT1O.OUTPF2O = (60)'_';
+    EDIT1O.OUTPF3O = (60)'_';
+    EDIT1O.OUTPF4O = (60)'_';
+    EDIT1O.OUTPF5O = (60)'_';
+
+    EDIT1O.INFO1AO = 'INFO:';
+    EDIT1O.INFO1BO = 'Unesite vrstu i ID i pritisnite ENTER...';
+    EDIT1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
+
+    EDIT1O.UNOS01A = DFHBMFSE;  /*Type input - unprotected,highlighted*/
+
+    EDIT1O.VRSTA1A = DFHBMPRO;  /* Labels - protected */
+    EDIT1O.OPIS1AA = DFHBMPRO;
+    EDIT1O.OPIS1BA = DFHBMPRO;
+    EDIT1O.ID001AA = DFHBMPRO;
+    EDIT1O.OPIS2A = DFHBMPRO;
+    EDIT1O.OUTPF1A = DFHBMPRO;  /* Output fields - protected */
+    EDIT1O.OUTPF2A = DFHBMPRO;
+    EDIT1O.OUTPF3A = DFHBMPRO;
+    EDIT1O.OUTPF4A = DFHBMPRO;
+    EDIT1O.OUTPF5A = DFHBMPRO;
+    EDIT1O.INFO1AA = DFHBMPRO;
+    EDIT1O.INFO1BA = DFHBMPRO;
+  END INIT_MAP;
+
+ END EDITP;
