@@ -1,0 +1,108 @@
+ NAUTHP: PROC OPTIONS(MAIN);
+
+  %INCLUDE DFHAID;
+  %INCLUDE DFHBMSCA;
+  %INCLUDE NAUTH1M;
+
+  EXEC SQL INCLUDE SQLCA;
+  EXEC SQL INCLUDE AUTORIV;
+
+  DCL NAUTH1M CHAR(7) INIT('NAUTH1M');
+  DCL NAUTH01 CHAR(6) INIT('NAUTH1');
+  DCL COMMAREA CHAR(1);
+  DCL RESPONSE FIXED BINARY(31);
+
+  CALL INIT_MAP();
+  CALL MAIN_LOOP();
+
+  MAIN_LOOP: PROC;
+    DO FOREVER;
+      CALL DISP_SCR();
+      CALL HANDLE_AID();
+
+      SELECT(EIBAID);
+        WHEN(DFHPF3) DO;  /* Return to menu */
+          EXEC CICS XCTL PROGRAM('MENUP')
+               RESP(RESPONSE);
+        END;
+        WHEN(DFHPF5) DO;  /* Refresh screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHCLEAR) DO;  /* Clear screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHENTER) DO;  /* Process input */
+          CALL PROCESS_INPUT();
+        END;
+        OTHERWISE;
+      END;
+    END;
+  END MAIN_LOOP;
+
+  DISP_SCR: PROC;
+    /* Send map to terminal */
+    EXEC CICS SEND MAP(NAUTH01) MAPSET(NAUTH1M)
+         FROM(NAUTH1O)
+         ERASE
+         CURSOR(1)
+         RESP(RESPONSE);
+
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      NAUTH1O.INFO1BO = 'Greska pri prikazu ekrana.';
+      EXEC CICS SEND TEXT FROM(NAUTH1O.INFO1BO) ERASE;
+      EXEC CICS RETURN;
+    END;
+
+    /* Receive input from terminal */
+    EXEC CICS RECEIVE MAP(NAUTH01) MAPSET(NAUTH1M)
+         INTO(NAUTH1I)
+         RESP(RESPONSE);
+  END DISP_SCR;
+
+  HANDLE_AID: PROC;
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      IF EIBAID = DFHCLEAR | EIBAID = DFHPF3 |
+         EIBAID = DFHPF5 THEN RETURN;
+
+      NAUTH1O.INFO1BO = 'Greska pri citanju unosa.';
+      CALL DISP_SCR();
+      EXEC CICS RETURN;
+    END;
+  END HANDLE_AID;
+
+  PROCESS_INPUT: PROC;
+    NAUTH1O.INFO1BO = 'Unos je u obradi...';
+  END PROCESS_INPUT;
+
+  INIT_MAP: PROC;
+    NAUTH1O.NASLOV1O = 'NAUTH1';
+    NAUTH1O.NASLOV2O = 'DODAVANJE NOVOG AUTORA U SUSTAV KNJIZNICE';
+    NAUTH1O.NASLOV3O = 'NAPOMENA:ID AUTORA SE GENERIRA AUTOMATSKI!';
+    NAUTH1O.NASLOV4O = 'UNESI SVA OSTALA POLJA!';
+
+    NAUTH1O.IDUNOSO = 'ID:';
+    NAUTH1O.ID00001O = '';  /* Will be auto-generated */
+    NAUTH1O.PREZ01O = 'PREZIME:';
+    NAUTH1O.UNOSP1O = '';
+    NAUTH1O.IME001O = 'IME:';
+    NAUTH1O.UNIME1O = '';
+
+    NAUTH1O.INFO1AO = 'INFO:';
+    NAUTH1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';
+    NAUTH1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
+
+    NAUTH1O.UNOSP1A = DFHBMFSE;  /* Prezime - unprotected, highlighted*/
+    NAUTH1O.UNIME1A = DFHBMFSE;  /* Ime - unprotected, highlighted */
+
+    NAUTH1O.ID00001A = DFHBMPRO;  /* ID - protected */
+    NAUTH1O.NASLOV1A = DFHBMPRO;  /* Headers - protected */
+    NAUTH1O.NASLOV2A = DFHBMPRO;
+    NAUTH1O.NASLOV3A = DFHBMPRO;
+    NAUTH1O.NASLOV4A = DFHBMPRO;
+    NAUTH1O.INFO1AA = DFHBMPRO;
+    NAUTH1O.INFO1BA = DFHBMPRO;
+  END INIT_MAP;
+
+ END NAUTHP;

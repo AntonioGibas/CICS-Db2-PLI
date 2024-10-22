@@ -1,0 +1,119 @@
+ NUSERP: PROC OPTIONS(MAIN);
+
+  %INCLUDE DFHAID;
+  %INCLUDE DFHBMSCA;
+  %INCLUDE NUSER1M;
+
+  EXEC SQL INCLUDE SQLCA;
+  EXEC SQL INCLUDE CLANOVIV;
+
+  DCL NUSER1M CHAR(7) INIT('NUSER1M');
+  DCL NUSER01 CHAR(6) INIT('NUSER1');
+  DCL COMMAREA CHAR(1);
+  DCL RESPONSE FIXED BINARY(31);
+
+  CALL INIT_MAP();
+  CALL MAIN_LOOP();
+
+  MAIN_LOOP: PROC;
+    DO FOREVER;
+      CALL DISP_SCR();
+      CALL HANDLE_AID();
+
+      /* Process based on AID key pressed */
+      SELECT(EIBAID);
+        WHEN(DFHPF3) DO;  /* Return to menu */
+          EXEC CICS XCTL PROGRAM('MENUP')
+               RESP(RESPONSE);
+        END;
+        WHEN(DFHPF5) DO;  /* Refresh screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHCLEAR) DO;  /* Clear screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHENTER) DO;  /* Process input */
+          CALL PROCESS_INPUT();
+        END;
+        OTHERWISE;
+      END;
+    END;
+  END MAIN_LOOP;
+
+  DISP_SCR: PROC;
+    /* Send map to terminal */
+    EXEC CICS SEND MAP(NUSER01) MAPSET(NUSER1M)
+         FROM(NUSER1O)
+         ERASE
+         RESP(RESPONSE);
+
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      NUSER1O.INFO1BO = 'Greska pri prikazu ekrana.';
+      EXEC CICS SEND TEXT FROM(NUSER1O.INFO1BO) ERASE;
+      EXEC CICS RETURN;
+    END;
+
+    /* Receive input from terminal */
+    EXEC CICS RECEIVE MAP(NUSER01) MAPSET(NUSER1M)
+         INTO(NUSER1I)
+         RESP(RESPONSE);
+  END DISP_SCR;
+
+  HANDLE_AID: PROC;
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      IF EIBAID = DFHCLEAR | EIBAID = DFHPF3 |
+         EIBAID = DFHPF5 THEN RETURN;
+
+      NUSER1O.INFO1BO = 'Greska pri citanju unosa.';
+      CALL DISP_SCR();
+      EXEC CICS RETURN;
+    END;
+  END HANDLE_AID;
+
+  PROCESS_INPUT: PROC;
+    NUSER1O.INFO1BO = 'Unos je u obradi...';
+  END PROCESS_INPUT;
+
+  INIT_MAP: PROC;
+    /* Initialize screen fields */
+    NUSER1O.NASLOV1O = 'NUSER1';
+    NUSER1O.NASLOV2O = 'DODAVANJE NOVOG CLANA U SUSTAV KNJIZNICE';
+    NUSER1O.NASLOV3O = 'NAPOMENA: ID CLANA SE GENERIRA AUTOMATSKI!';
+    NUSER1O.NASLOV4O = 'UNESI SVA OSTALA POLJA!';
+
+    NUSER1O.IDUNOSO = 'ID:';
+    NUSER1O.ID00001O = '';
+    NUSER1O.PREZ01O = 'PREZIME:';
+    NUSER1O.UNOSP1O = '';
+    NUSER1O.IME001O = 'IME:';
+    NUSER1O.UNIME1O = '';
+    NUSER1O.DATOD1O = 'DATOD:';
+    NUSER1O.UNDOD1O = '';
+    NUSER1O.OPDOD1O = '(DD/MM/GGGG)';
+    NUSER1O.STATUS1O = 'STATUS:';
+    NUSER1O.STATU1O = '';
+    NUSER1O.OPSTS1O = '00001 - AKTIVNA';
+    NUSER1O.OPSTS2O = '00002 - CEKANJE POTVRDE UPLATE CLANARINE';
+    NUSER1O.OPSTS3O = '00003 - NEAKTIVNA';
+
+    NUSER1O.INFO1AO = 'INFO:';
+    NUSER1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';
+    NUSER1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
+
+    NUSER1O.UNOSP1A = DFHBMFSE; /* Prezime - unprotected, highlighted */
+    NUSER1O.UNIME1A = DFHBMFSE; /* Ime - unprotected, highlighted */
+    NUSER1O.UNDOD1A = DFHBMFSE; /* Datum - unprotected, highlighted */
+    NUSER1O.STATU1A = DFHBMFSE; /* Status - unprotected, highlighted */
+
+    NUSER1O.ID00001A = DFHBMPRO;  /* ID - protected */
+    NUSER1O.NASLOV1A = DFHBMPRO;  /* Headers - protected */
+    NUSER1O.NASLOV2A = DFHBMPRO;
+    NUSER1O.NASLOV3A = DFHBMPRO;
+    NUSER1O.NASLOV4A = DFHBMPRO;
+    NUSER1O.INFO1AA = DFHBMPRO;
+    NUSER1O.INFO1BA = DFHBMPRO;
+  END INIT_MAP;
+
+ END NUSERP;

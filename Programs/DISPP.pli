@@ -25,15 +25,14 @@
   DCL HVRSTA CHAR(11);
   DCL HID FIXED BINARY(31);
 
+  CALL INIT_MAP();
   CALL MAIN_LOOP();
 
   MAIN_LOOP:PROC;
-
-    CALL INIT_MAP();
-
     PETLJA:DO FOREVER;
 
         CALL DISP_SCR();
+
         IF WS_RESP1 <> DFHRESP(NORMAL) THEN
             CALL ERROR_H('DISP_SCR');
 
@@ -51,7 +50,6 @@
         END;
 
     END PETLJA;
-
   END MAIN_LOOP;
 
   HANDLE_INPUT:PROC;
@@ -95,25 +93,25 @@
 
      /* Odredjivanje na koju tablicu se radi upit */
    SELECT(HVRSTA);
-     WHEN('KNJIGE_____') DO;
+     WHEN('KNJIGE     ') DO;
         CALL OPT_KNJ;
      END;
-     WHEN('DOBAVLJACI_') DO;
+     WHEN('DOBAVLJACI ') DO;
         CALL OPT_DOB;
      END;
-     WHEN('AUTORI_____') DO;
+     WHEN('AUTORI     ') DO;
         CALL OPT_AUT;
      END;
-     WHEN('CLANOVI____') DO;
+     WHEN('CLANOVI    ') DO;
         CALL OPT_CLA;
      END;
-     WHEN('POSUDBA____') DO;
+     WHEN('POSUDBA    ') DO;
         CALL OPT_POS;
      END;
      WHEN('REZERVACIJA') DO;
         CALL OPT_REZ;
      END;
-     WHEN('ZAKASNINA__') DO;
+     WHEN('ZAKASNINA  ') DO;
         CALL OPT_ZAK;
      END;
      OTHERWISE DO;
@@ -171,11 +169,11 @@
  END OPT_KNJ;
 
  DISP_KNJ: PROC;
-   DISP1O.OUTPF1O = 'Naziv: ' || KNJIGE.NAZIV;
-   DISP1O.OUTPF2O = 'Autor: ' || KNJIGE.AUTOR;
-   DISP1O.OUTPF3O = 'Kategorija: ' || KNJIGE.KATGRJ;
-   DISP1O.OUTPF4O = 'Godina izdanja: ' || CHAR(KNJIGE.GODIZD);
-   DISP1O.OUTPF5O = 'Broj knjiga: ' || CHAR(KNJIGE.BRKNJ);
+   DISP1O.OUTPF1O =  KNJIGE.NAZIV;
+   DISP1O.OUTPF2O =  KNJIGE.AUTOR;
+   DISP1O.OUTPF3O =  KNJIGE.KATGRJ;
+   DISP1O.OUTPF4O =  CHAR(KNJIGE.GODIZD);
+   DISP1O.OUTPF5O =  CHAR(KNJIGE.BRKNJ);
    DISP1O.INFO1BO = 'Podaci o knjizi uspjesno dohvaceni.';
  END DISP_KNJ;
 

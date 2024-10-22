@@ -119,15 +119,63 @@
  END OPT_03;
 
  OPT_04: PROC();
-    MENU01O.INFO1O = 'Novi korisnik - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Dodavanje novog clana.';
+
+   EXEC CICS XCTL PROGRAM('NUSERP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program NUSERP nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: NUSERP program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
  END OPT_04;
 
  OPT_05: PROC();
-    MENU01O.INFO1O = 'Novi autor - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Dodavanje novog autora.';
+
+   EXEC CICS XCTL PROGRAM('NAUTHP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program NAUTH nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: NAUTH program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
  END OPT_05;
 
  OPT_06: PROC();
-    MENU01O.INFO1O = 'Novi dobavljac - Opcija jos nije implementirana';
+   MENU01O.INFO1O = 'Dodavanje novog dobavljaca.';
+
+   EXEC CICS XCTL PROGRAM('NSUPP')
+        RESP(RESPONSE);
+
+  IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+    SELECT(RESPONSE);
+      WHEN(DFHRESP(PGMIDERR))
+        MENU01O.INFO1O = 'Greska: Program NSUPP nije pronaden.';
+      WHEN(DFHRESP(NOTAUTH))
+        MENU01O.INFO1O = 'Greska: NSUPP program.';
+      OTHERWISE
+        MENU01O.INFO1O = 'Greska poziva prikazne aplikacije. RESP: ' ||
+        CHAR(RESPONSE);
+    END;
+    CALL DISP_SCR();
+  END;
  END OPT_06;
 
  OPT_07: PROC();

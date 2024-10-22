@@ -1,0 +1,113 @@
+ NSUPPP: PROC OPTIONS(MAIN);
+
+  %INCLUDE DFHAID;
+  %INCLUDE DFHBMSCA;
+  %INCLUDE NSUPP1M;
+
+  EXEC SQL INCLUDE SQLCA;
+  EXEC SQL INCLUDE DOBAVLJV;
+
+  DCL NSUPP1M CHAR(7) INIT('NSUPP1M');
+  DCL NSUPP01 CHAR(6) INIT('NSUPP1');
+  DCL COMMAREA CHAR(1);
+  DCL RESPONSE FIXED BINARY(31);
+
+  CALL INIT_MAP();
+  CALL MAIN_LOOP();
+
+  MAIN_LOOP: PROC;
+    DO FOREVER;
+      CALL DISP_SCR();
+      CALL HANDLE_AID();
+
+      /* Process based on AID key pressed */
+      SELECT(EIBAID);
+        WHEN(DFHPF3) DO;  /* Return to menu */
+          EXEC CICS XCTL PROGRAM('MENUP')
+               RESP(RESPONSE);
+        END;
+        WHEN(DFHPF5) DO;  /* Refresh screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHCLEAR) DO;  /* Clear screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHENTER) DO;  /* Process input */
+          CALL PROCESS_INPUT();
+        END;
+        OTHERWISE;
+      END;
+    END;
+  END MAIN_LOOP;
+
+  DISP_SCR: PROC;
+    /* Send map to terminal */
+    EXEC CICS SEND MAP(NSUPP01) MAPSET(NSUPP1M)
+         FROM(NSUPP1O)
+         ERASE
+         CURSOR(1)
+         RESP(RESPONSE);
+
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      NSUPP1O.INFO1BO = 'Greska pri prikazu ekrana.';
+      EXEC CICS SEND TEXT FROM(NSUPP1O.INFO1BO) ERASE;
+      EXEC CICS RETURN;
+    END;
+
+    /* Receive input from terminal */
+    EXEC CICS RECEIVE MAP(NSUPP01) MAPSET(NSUPP1M)
+         INTO(NSUPP1I)
+         RESP(RESPONSE);
+  END DISP_SCR;
+
+  HANDLE_AID: PROC;
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      IF EIBAID = DFHCLEAR | EIBAID = DFHPF3 |
+         EIBAID = DFHPF5 THEN RETURN;
+
+      NSUPP1O.INFO1BO = 'Greska pri citanju unosa.';
+      CALL DISP_SCR();
+      EXEC CICS RETURN;
+    END;
+  END HANDLE_AID;
+
+  PROCESS_INPUT: PROC;
+    /* Here we'll add input validation and processing logic later */
+    NSUPP1O.INFO1BO = 'Unos je u obradi...';
+  END PROCESS_INPUT;
+
+  INIT_MAP: PROC;
+    /* Initialize screen fields */
+    NSUPP1O.NASLOV1O = 'DODAVANJE NOVOG DOBAVLJACA U SUSTAV KNJIZNICE';
+    NSUPP1O.NASLOV2O = 'NSUPP1';
+    NSUPP1O.NASLOV3O = 'NAPOMENA: ID SE GENERIRA AUTOMATSKI!';
+    NSUPP1O.NASLOV4O = 'UNESI SVA OSTALA POLJA!';
+
+    NSUPP1O.IDUNOSO = 'ID:';
+    NSUPP1O.ID00001O = '';  /* Will be auto-generated */
+    NSUPP1O.NAZIV1O = 'NAZIV:';
+    NSUPP1O.UNOSP1O = '';
+    NSUPP1O.KONTBR1O = 'KONTBR:';
+    NSUPP1O.UKONT1O = '';
+
+    NSUPP1O.INFO1AO = 'INFO:';
+    NSUPP1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';
+    NSUPP1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
+
+    /* Set input field attributes */
+    NSUPP1O.UNOSP1A = DFHBMFSE;  /* Naziv - unprotected, highlighted */
+    NSUPP1O.UKONT1A = DFHBMFSE;  /* Kontakt broj - unprotected, highlighted */
+
+    /* Set output field attributes */
+    NSUPP1O.ID00001A = DFHBMPRO;  /* ID - protected */
+    NSUPP1O.NASLOV1A = DFHBMPRO;  /* Headers - protected */
+    NSUPP1O.NASLOV2A = DFHBMPRO;
+    NSUPP1O.NASLOV3A = DFHBMPRO;
+    NSUPP1O.NASLOV4A = DFHBMPRO;
+    NSUPP1O.INFO1AA = DFHBMPRO;
+    NSUPP1O.INFO1BA = DFHBMPRO;
+  END INIT_MAP;
+
+ END NSUPPP;
