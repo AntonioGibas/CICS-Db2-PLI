@@ -26,7 +26,6 @@
       CALL DISP_SCR();
       CALL HANDLE_AID();
 
-      /* Process based on AID key pressed */
       SELECT(EIBAID);
         WHEN(DFHPF3) DO;  /* Return to menu */
           EXEC CICS XCTL PROGRAM('MENUP')
@@ -80,12 +79,10 @@
   END HANDLE_AID;
 
   PROCESS_INPUT: PROC;
-    /* Here we'll add record searching and display logic later */
     EDIT1O.INFO1BO = 'Trazenje zapisa...';
   END PROCESS_INPUT;
 
   INIT_MAP: PROC;
-    /* Initialize screen fields */
     EDIT1O.VRSTA1O = 'VRSTA:';
     EDIT1O.UNOS01O = (11)'_';
     EDIT1O.OPIS1AO = 'KNJIGE,DOBAVLJACI,AUTORI,CLANOVI,POSUDBA,';
