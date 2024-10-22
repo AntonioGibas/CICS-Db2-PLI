@@ -1,0 +1,123 @@
+ NUBKP: PROC OPTIONS(MAIN);
+
+  %INCLUDE DFHAID;
+  %INCLUDE DFHBMSCA;
+  %INCLUDE NBOOK1M;
+
+  EXEC SQL INCLUDE SQLCA;
+  EXEC SQL INCLUDE KNJIGEV;
+
+  DCL NBOOK1M CHAR(7) INIT('NBOOK1M');
+  DCL NBOOK01 CHAR(6) INIT('NBOOK1');
+  DCL COMMAREA CHAR(1);
+  DCL RESPONSE FIXED BINARY(31);
+
+  CALL INIT_MAP();
+  CALL MAIN_LOOP();
+
+  MAIN_LOOP: PROC;
+    DO FOREVER;
+      CALL DISP_SCR();
+      CALL HANDLE_AID();
+
+      /* Process based on AID key pressed */
+      SELECT(EIBAID);
+        WHEN(DFHPF3) DO;  /* Return to menu */
+          EXEC CICS XCTL PROGRAM('MENUP')
+               RESP(RESPONSE);
+        END;
+        WHEN(DFHPF5) DO;  /* Refresh screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHCLEAR) DO;  /* Clear screen */
+          CALL INIT_MAP();
+          ITERATE;
+        END;
+        WHEN(DFHENTER) DO;  /* Process input */
+          CALL PROCESS_INPUT();
+        END;
+        OTHERWISE;
+      END;
+    END;
+  END MAIN_LOOP;
+
+  DISP_SCR: PROC;
+    /* Send map to terminal */
+    EXEC CICS SEND MAP(NBOOK01) MAPSET(NBOOK1M)
+         FROM(NBOOK1O)
+         ERASE
+         CURSOR(1)
+         RESP(RESPONSE);
+
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      NBOOK1O.INFO1BO = 'Greska pri prikazu ekrana.';
+      EXEC CICS SEND TEXT FROM(NBOOK1O.INFO1BO) ERASE;
+      EXEC CICS RETURN;
+    END;
+
+    /* Receive input from terminal */
+    EXEC CICS RECEIVE MAP(NBOOK01) MAPSET(NBOOK1M)
+         INTO(NBOOK1I)
+         RESP(RESPONSE);
+  END DISP_SCR;
+
+  HANDLE_AID: PROC;
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      IF EIBAID = DFHCLEAR | EIBAID = DFHPF3 |
+         EIBAID = DFHPF5 THEN RETURN;
+
+      NBOOK1O.INFO1BO = 'Greska pri citanju unosa.';
+      CALL DISP_SCR();
+      EXEC CICS RETURN;
+    END;
+  END HANDLE_AID;
+
+  PROCESS_INPUT: PROC;
+    /* Here we'll add input validation and processing logic later */
+    NBOOK1O.INFO1BO = 'Unos je u obradi...';
+  END PROCESS_INPUT;
+
+  INIT_MAP: PROC;
+    /* Initialize screen fields */
+    NBOOK1O.NASLOV1O = 'NBOOK1';
+    NBOOK1O.NASLOV2O = 'UNOS NOVE KNJIGE U SUSTAV';
+
+    NBOOK1O.IDUNOSO  = 'ID        :';
+    NBOOK1O.ID00001O = (5)'_';
+    NBOOK1O.NAZIV1O  = 'NAZIV     :';
+    NBOOK1O.UNOSP1O  = (60)'_';
+    NBOOK1O.NAUTO1O  = 'AUTOR     :';
+    NBOOK1O.UNAUT1O  = (60)'_';
+    NBOOK1O.KATGRJ1O = 'KATEGORIJA:';
+    NBOOK1O.UNKAT1O  = (20)'_';
+    NBOOK1O.GODIZD1O = 'GODINA    :';
+    NBOOK1O.UNGOD1O  = (5)'_';
+    NBOOK1O.BRKNJ1O  = 'BROJ      :';
+    NBOOK1O.UNBRK1O  = (5)'_';
+
+    NBOOK1O.INFO1AO = 'INFO:';
+    NBOOK1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';
+    NBOOK1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
+
+    NBOOK1O.UNOSP1A = DFHBMFSE;  /* Naziv - unprotected, highlighted */
+    NBOOK1O.UNAUT1A = DFHBMFSE;  /* Autor - unprotected, highlighted */
+    NBOOK1O.UNKAT1A = DFHBMFSE;  /*Kategorija-unprotected,highlighted*/
+    NBOOK1O.UNGOD1A = DFHBMFSE;  /* Godina - unprotected, highlighted*/
+    NBOOK1O.UNBRK1A = DFHBMFSE;  /* Broj knjiga - unprotected,
+    highlighted */
+
+    NBOOK1O.ID00001A = DFHBMPRO;  /* ID - protected */
+    NBOOK1O.NASLOV1A = DFHBMPRO;  /* Headers - protected */
+    NBOOK1O.NASLOV2A = DFHBMPRO;
+    NBOOK1O.IDUNOSA = DFHBMPRO;
+    NBOOK1O.NAZIV1A = DFHBMPRO;
+    NBOOK1O.NAUTO1A = DFHBMPRO;
+    NBOOK1O.KATGRJ1A = DFHBMPRO;
+    NBOOK1O.GODIZD1A = DFHBMPRO;
+    NBOOK1O.BRKNJ1A = DFHBMPRO;
+    NBOOK1O.INFO1AA = DFHBMPRO;
+    NBOOK1O.INFO1BA = DFHBMPRO;
+  END INIT_MAP;
+
+ END NUBKP;
