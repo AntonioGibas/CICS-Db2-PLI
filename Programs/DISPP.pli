@@ -18,19 +18,20 @@
   DCL COMMAREA CHAR(1);
   DCL RESPONSE FIXED BINARY(31);
 
-  CALL INIT_MAP();
+
   CALL MAIN_LOOP();
 
   MAIN_LOOP: PROC;
     DO FOREVER;
+
+      CALL INIT_MAP();
       CALL DISP_SCR();
       CALL HANDLE_AID();
 
-      /* Process based on AID key pressed */
       SELECT(EIBAID);
-        WHEN(DFHPF3) DO;  /* Return to menu */
-          EXEC CICS XCTL PROGRAM('MENUP')
-               RESP(RESPONSE);
+        WHEN(DFHPF3) DO;
+         EXEC CICS LINK PROGRAM('MENUP')
+           RESP(RESPONSE);
         END;
         WHEN(DFHPF5) DO;  /* Refresh screen */
           CALL INIT_MAP();
@@ -52,20 +53,12 @@
     /* Send map to terminal */
     EXEC CICS SEND MAP(DISP01) MAPSET(DISP1M)
          FROM(DISP1O)
-         ERASE
-         CURSOR(1)
-         RESP(RESPONSE);
-
-    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
-      DISP1O.INFO1BO = 'Greska pri prikazu ekrana.';
-      EXEC CICS SEND TEXT FROM(DISP1O.INFO1BO) ERASE;
-      EXEC CICS RETURN;
-    END;
+         ERASE;
 
     /* Receive input from terminal */
     EXEC CICS RECEIVE MAP(DISP01) MAPSET(DISP1M)
-         INTO(DISP1I)
-         RESP(RESPONSE);
+         INTO(DISP1I);
+
   END DISP_SCR;
 
   HANDLE_AID: PROC;
@@ -80,8 +73,54 @@
   END HANDLE_AID;
 
   PROCESS_INPUT: PROC;
-    /* Here we'll add record searching and display logic later */
-    DISP1O.INFO1BO = 'Trazenje zapisa...';
+   DCL VRSTA CHAR(11);
+   DCL UNESENI_ID FIXED BINARY(31);
+
+   /* Provjera unosa vrste */
+   IF DISP1I.UNOS01I = '' THEN DO;
+     DISP1O.INFO1BO = 'Unesite vrstu i ID.';
+     RETURN;
+   END;
+
+   VRSTA = SCRUBOUT(DISP1I.UNOS01I, '_');
+   UNESENI_ID = BINARY(SCRUBOUT(DISP1I.ID001BI,'_'));
+
+   IF VRSTA = 'KNJIGE' THEN DO;
+
+    EXEC SQL SELECT *
+         INTO :KNJIGE
+         FROM VIEW_KNJIGE
+         WHERE ID = :UNESENI_ID;
+
+    SELECT(SQLCODE);
+      WHEN(0) DO;
+        DISP1O = '';
+        DISP1O.OUTPF1O = KNJIGE.NAZIV;
+        DISP1O.OUTPF2O = KNJIGE.AUTOR;
+        DISP1O.OUTPF3O = KNJIGE.KATGRJ;
+        DISP1O.OUTPF4O = CHAR(KNJIGE.GODIZD);
+        DISP1O.OUTPF5O = CHAR(KNJIGE.BRKNJ);
+        DISP1O.INFO1BO = 'Knjiga pronadjena.';
+      END;
+      WHEN(100) DO;
+        DISP1O.INFO1BO = 'Knjiga nije pronadjena.';
+      END;
+      OTHERWISE DO;
+        DISP1O.INFO1BO = 'SQL greska: ' || CHAR(SQLCODE);
+      END;
+    END;
+
+        /* Prikaz rezultata */
+    EXEC CICS SEND MAP(DISP01) MAPSET(DISP1M)
+              FROM(DISP1O)
+              ERASE;
+
+    /* Čekaj PF tipku */
+    EXEC CICS RECEIVE MAP(DISP01) MAPSET(DISP1M)
+              INTO(DISP1I);
+
+   END;
+
   END PROCESS_INPUT;
 
   INIT_MAP: PROC;
@@ -91,7 +130,7 @@
     DISP1O.OPIS1AO = 'KNJIGE,DOBAVLJACI,AUTORI,CLANOVI,POSUDBA,';
     DISP1O.OPIS1BO = 'REZERVACIJA,POSUDBA,ZAKASNINA';
 
-    DISP1O.ID001AO = 'ID    :';
+    DISP1O.ID001AO = 'ID   :';
     DISP1O.ID001BO = (5)'_';
     DISP1O.OPIS2O = '(ID VRSTE)';
 
@@ -106,17 +145,14 @@
     DISP1O.INFO1BO = 'Unesite vrstu i ID i pritisnite ENTER...';
     DISP1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
 
-    /* Set input field attributes */
-    DISP1O.UNOS01A = DFHBMFSE;  /* Type input - unprotected, highlighted */
-    DISP1O.ID001BA = DFHBMFSE;  /* ID input - unprotected, highlighted */
-
-    /* Set output field attributes */
-    DISP1O.VRSTA1A = DFHBMPRO;  /* Labels - protected */
+    DISP1O.UNOS01A = DFHBMFSE;
+    DISP1O.ID001BA = DFHBMFSE;
+    DISP1O.VRSTA1A = DFHBMPRO;
     DISP1O.OPIS1AA = DFHBMPRO;
     DISP1O.OPIS1BA = DFHBMPRO;
     DISP1O.ID001AA = DFHBMPRO;
-    DISP1O.OPIS2A = DFHBMPRO;
-    DISP1O.OUTPF1A = DFHBMPRO;  /* Output fields - protected */
+    DISP1O.OPIS2A  = DFHBMPRO;
+    DISP1O.OUTPF1A = DFHBMPRO;
     DISP1O.OUTPF2A = DFHBMPRO;
     DISP1O.OUTPF3A = DFHBMPRO;
     DISP1O.OUTPF4A = DFHBMPRO;
