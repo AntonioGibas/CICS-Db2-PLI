@@ -4,13 +4,48 @@
   %INCLUDE DFHBMSCA;
   %INCLUDE POSUD1M;
 
-  EXEC SQL INCLUDE SQLCA;
-  EXEC SQL INCLUDE POSUDBAV;
-
   DCL POSUD1M CHAR(7) INIT('POSUD1M');
   DCL POSUD01 CHAR(6) INIT('POSUD1');
   DCL COMMAREA CHAR(1);
   DCL RESPONSE FIXED BINARY(31);
+
+  /* Date handling */
+  DCL DATETIME BUILTIN;
+  DCL DATUM CHAR(17);
+  DCL 1 DAT DEF DATUM,
+       2 GG PIC'9999',
+       2 MM PIC'99',
+       2 DD PIC'99';
+
+  /* VSAM record structures */
+  DCL 1 POSUDBA_RECORD,
+        2 POSUDBA_ID     PIC'(5)9',    /* Loan ID */
+        2 POSUDBA_IDKNJ  PIC'(5)9',    /* Book ID */
+        2 POSUDBA_IDKOR  PIC'(5)9',    /* Member ID */
+        2 POSUDBA_DATPOS CHAR(10),     /* Borrowing date */
+        2 FILLER         CHAR(165);    /* Padding to 200 bytes */
+
+  DCL 1 KNJIGE_RECORD,
+        2 KNJIGE_ID     PIC'(5)9',
+        2 KNJIGE_NAZIV  CHAR(60),
+        2 KNJIGE_AUTOR  CHAR(60),
+        2 KNJIGE_KAT    CHAR(20),
+        2 KNJIGE_GOD    PIC'(4)9',
+        2 KNJIGE_KOLIC  PIC'(5)9',
+        2 FILLER       CHAR(46);
+
+  DCL 1 CLANOVI_RECORD,
+        2 CLANOVI_ID      PIC'(5)9',
+        2 CLANOVI_PREZIME CHAR(60),
+        2 CLANOVI_IME     CHAR(60),
+        2 CLANOVI_DATOD   CHAR(10),
+        2 CLANOVI_STATUS  PIC'(5)9',
+        2 FILLER         CHAR(60);
+
+  DCL VSAM_LEN  FIXED BIN(31) INIT(200); /* Record length */
+  DCL NEXT_ID   PIC'(5)9';               /* For ID generation */
+  DCL TEMP_ID   CHAR(5);                 /* For key operations */
+  DCL IS_VALID  BIT(1);                  /* For validation */
 
   CALL INIT_MAP();
   CALL MAIN_LOOP();
@@ -20,7 +55,6 @@
       CALL DISP_SCR();
       CALL HANDLE_AID();
 
-      /* Process based on AID key pressed */
       SELECT(EIBAID);
         WHEN(DFHPF3) DO;  /* Return to menu */
           EXEC CICS XCTL PROGRAM('MENUP')
@@ -35,12 +69,168 @@
           ITERATE;
         END;
         WHEN(DFHENTER) DO;  /* Process input */
-          CALL PROCESS_INPUT();
+          CALL VALIDATE_INPUT();
+          IF IS_VALID THEN
+            CALL ADD_LOAN();
         END;
         OTHERWISE;
       END;
     END;
   END MAIN_LOOP;
+
+  VALIDATE_INPUT: PROC;
+    DCL KNJIGA_ID     CHAR(5);
+    DCL KORISNIK_ID   CHAR(5);
+
+    IS_VALID = '1'B;
+
+    /* Clean and validate book ID */
+    KNJIGA_ID = SCRUBOUT(POSUD1I.UNOSP1I,'_ ');
+    IF KNJIGA_ID = '' | VERIFY(KNJIGA_ID, '0123456789') > 0 THEN DO;
+      IS_VALID = '0'B;
+      POSUD1O.INFO1BO = 'ID knjige mora biti broj.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Check if book exists and is available */
+    TEMP_ID = KNJIGA_ID;
+    EXEC CICS READ FILE('KNJIGEV')
+         INTO(KNJIGE_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NOTFND) THEN DO;
+      IS_VALID = '0'B;
+      POSUD1O.INFO1BO = 'Knjiga ne postoji.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    IF KNJIGE_KOLIC <= 0 THEN DO;
+      IS_VALID = '0'B;
+      POSUD1O.INFO1BO = 'Knjiga nije dostupna za posudbu.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Clean and validate member ID */
+    KORISNIK_ID = SCRUBOUT(POSUD1I.UNIKR1I,'_ ');
+    IF KORISNIK_ID = '' | VERIFY(KORISNIK_ID, '0123456789') > 0 THEN DO;
+      IS_VALID = '0'B;
+      POSUD1O.INFO1BO = 'ID korisnika mora biti broj.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Check if member exists */
+    TEMP_ID = KORISNIK_ID;
+    EXEC CICS READ FILE('CLANOVIV')
+         INTO(CLANOVI_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NOTFND) THEN DO;
+      IS_VALID = '0'B;
+      POSUD1O.INFO1BO = 'Korisnik ne postoji.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    IF CLANOVI_STATUS <> 1 THEN DO;
+      IS_VALID = '0'B;
+      POSUD1O.INFO1BO = 'Korisnik nije aktivan.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+  END VALIDATE_INPUT;
+
+  ADD_LOAN: PROC;
+    /* Get current date */
+    DATUM = DATETIME;
+
+    /* Generate next loan ID */
+    NEXT_ID = 0;
+    TEMP_ID = '';
+
+    EXEC CICS STARTBR FILE('POSUDBA')
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+      DO WHILE (RESPONSE = DFHRESP(NORMAL));
+          EXEC CICS READNEXT FILE('POSUDBA')
+               INTO(POSUDBA_RECORD)
+               LENGTH(VSAM_LEN)
+               RIDFLD(TEMP_ID)
+               RESP(RESPONSE);
+
+          IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+              IF POSUDBA_ID > NEXT_ID THEN
+                  NEXT_ID = POSUDBA_ID;
+          END;
+      END;
+
+      EXEC CICS ENDBR FILE('POSUDBA')
+           RESP(RESPONSE);
+    END;
+
+    /* Increment ID */
+    NEXT_ID = NEXT_ID + 1;
+
+    /* Prepare loan record */
+    POSUDBA_RECORD = '';
+    POSUDBA_ID     = NEXT_ID;
+    POSUDBA_IDKNJ  = BINARY(SCRUBOUT(POSUD1I.UNOSP1I,'_ '),31);
+    POSUDBA_IDKOR  = BINARY(SCRUBOUT(POSUD1I.UNIKR1I,'_ '),31);
+    POSUDBA_DATPOS = DD || '/' || MM || '/' || GG;
+
+    /* Write loan record */
+    TEMP_ID = POSUDBA_ID;
+    EXEC CICS WRITE FILE('POSUDBA')
+         FROM(POSUDBA_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+        /* Update book quantity */
+        TEMP_ID = POSUDBA_IDKNJ;
+        EXEC CICS READ UPDATE FILE('KNJIGEV')
+             INTO(KNJIGE_RECORD)
+             LENGTH(VSAM_LEN)
+             RIDFLD(TEMP_ID)
+             RESP(RESPONSE);
+
+        IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+            KNJIGE_KOLIC = KNJIGE_KOLIC - 1;
+
+            EXEC CICS REWRITE FILE('KNJIGEV')
+                 FROM(KNJIGE_RECORD)
+                 LENGTH(VSAM_LEN)
+                 RESP(RESPONSE);
+
+            IF RESPONSE = DFHRESP(NORMAL) THEN
+                POSUD1O.INFO1BO = 'Posudba uspjesno dodana. ID: ' ||
+                                 CHAR(TEMP_ID) || ' Datum: ' ||
+                                 POSUDBA_DATPOS;
+            ELSE
+                POSUD1O.INFO1BO = 'Greska pri azuriranju kolicine: ' ||
+                                 CHAR(RESPONSE);
+        END;
+        ELSE
+            POSUD1O.INFO1BO = 'Greska pri citanju knjige: ' ||
+                             CHAR(RESPONSE);
+    END;
+    ELSE
+        POSUD1O.INFO1BO = 'Greska pri dodavanju posudbe: ' ||
+                          CHAR(RESPONSE);
+
+    CALL DISP_SCR();
+  END ADD_LOAN;
 
   DISP_SCR: PROC;
     /* Send map to terminal */
@@ -73,35 +263,34 @@
     END;
   END HANDLE_AID;
 
-  PROCESS_INPUT: PROC;
-    POSUD1O.INFO1BO = 'Unos je u obradi...';
-  END PROCESS_INPUT;
-
   INIT_MAP: PROC;
+    /* Get current date */
+    DATUM = DATETIME;
+
     /* Initialize screen fields */
     POSUD1O.NASLOV1O = 'POSUD1';
     POSUD1O.NASLOV2O = 'POSUDBA KNJIGA';
     POSUD1O.NASLOV3O = 'UNOS ID-A KNJIGE (SKENIRAJTI NA POLEDJINI)';
     POSUD1O.NASLOV4O = 'I ID KORISNIKA (SKRENIRATI ISKAZNICU)';
 
-    POSUD1O.KNJID1O = 'IDKNJ:';
-    POSUD1O.UNOSP1O = (5)'_';     /* Book ID field */
-    POSUD1O.IDKOR1O = 'IDKOR:';
-    POSUD1O.UNIKR1O = (5)'_';     /* User ID field */
+    POSUD1O.KNJID1O  = 'IDKNJ:';
+    POSUD1O.UNOSP1O  = (5)'_';
+    POSUD1O.IDKOR1O  = 'IDKOR:';
+    POSUD1O.UNIKR1O  = (5)'_';
     POSUD1O.DATPOS1O = 'DATPOS:';
-    POSUD1O.UNDPOS1O = (8)'_';    /* Date field */
-    POSUD1O.OPDOD1O = '(DD/MM/GGGG)';
+    POSUD1O.UNDPOS1O = CHAR(DD)||CHAR(MM)||CHAR(GG);
+    POSUD1O.OPDOD1O  = '';
 
     POSUD1O.INFO1AO = 'INFO:';
     POSUD1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';
     POSUD1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
 
-    /* Set input field attributes */
-    POSUD1O.UNOSP1A = DFHBMFSE; /* Book ID - unprotected, highlighted */
-    POSUD1O.UNIKR1A = DFHBMFSE; /* User ID - unprotected, highlighted */
-    POSUD1O.UNDPOS1A = DFHBMFSE; /* Date - unprotected, highlighted */
+    /* Set field attributes */
+    POSUD1O.UNOSP1A = DFHBMFSE;  /* Book ID - unprotected */
+    POSUD1O.UNIKR1A = DFHBMFSE;  /* User ID - unprotected */
+    POSUD1O.UNDPOS1A = DFHBMPRO; /* Date - protected */
+    POSUD1O.OPDOD1A = DFHBMPRO;  /* Date format - protected */
 
-    /* Set output field attributes */
     POSUD1O.NASLOV1A = DFHBMPRO;  /* Headers - protected */
     POSUD1O.NASLOV2A = DFHBMPRO;
     POSUD1O.NASLOV3A = DFHBMPRO;
@@ -109,9 +298,9 @@
     POSUD1O.KNJID1A = DFHBMPRO;
     POSUD1O.IDKOR1A = DFHBMPRO;
     POSUD1O.DATPOS1A = DFHBMPRO;
-    POSUD1O.OPDOD1A = DFHBMPRO;
     POSUD1O.INFO1AA = DFHBMPRO;
     POSUD1O.INFO1BA = DFHBMPRO;
+    POSUD1O.PFKEYSA = DFHBMPRO;
   END INIT_MAP;
 
  END POSUDP;

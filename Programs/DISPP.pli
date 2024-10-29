@@ -9,7 +9,7 @@
   DCL COMMAREA CHAR(1);
   DCL RESPONSE FIXED BINARY(31);
 
-  /* VSAM record structure */
+  /* VSAM record structure - knjige */
   DCL 1 KNJIGE_RECORD,
         2 KNJIGE_ID     PIC'(5)9',    /* 5-digit numeric ID */
         2 KNJIGE_NAZIV  CHAR(60),     /* Book title */
@@ -18,6 +18,30 @@
         2 KNJIGE_GOD    PIC'(4)9',    /* Year - numeric */
         2 KNJIGE_KOLIC  PIC'(5)9',    /* Quantity - numeric */
         2 FILLER        CHAR(46);     /* Padding to 200 bytes */
+
+  /* VSAM record structure - autori*/
+  DCL 1 AUTORI_RECORD,
+        2 AUTORI_ID       PIC'(5)9',    /* 5-digit numeric ID */
+        2 AUTORI_PREZIME  CHAR(60),     /* Author surname */
+        2 AUTORI_IME      CHAR(60),     /* Author name */
+        2 FILLER          CHAR(75);     /* Padding to 200 bytes */
+
+  /* VSAM record structure - clanovi */
+  DCL 1 CLANOVI_RECORD,
+        2 CLANOVI_ID       PIC'(5)9',    /* 5-digit numeric ID */
+        2 CLANOVI_PREZIME  CHAR(60),     /* Member lastname */
+        2 CLANOVI_IME      CHAR(60),     /* Member name */
+        2 CLANOVI_DATOD    CHAR(10),     /* Membership from date */
+        2 CLANOVI_STATUS   PIC'(5)9',    /* Membership status */
+        2 FILLER           CHAR(60);     /* Padding to 200 bytes */
+
+  /* VSAM record structure - posudba */
+  DCL 1 POSUDBA_RECORD,
+        2 POSUDBA_ID     PIC'(5)9',    /* Loan ID */
+        2 POSUDBA_IDKNJ  PIC'(5)9',    /* Book ID */
+        2 POSUDBA_IDKOR  PIC'(5)9',    /* Member ID */
+        2 POSUDBA_DATPOS CHAR(10),     /* Borrowing date */
+        2 FILLER         CHAR(165);    /* Padding to 200 bytes */
 
   DCL VSAM_LEN  FIXED BIN(31) INIT(200); /* Record length */
   DCL SEARCH_ID CHAR(5);                 /* For key operations */
@@ -44,14 +68,14 @@
           ITERATE;
         END;
         WHEN(DFHENTER) DO;  /* Process input */
-          CALL READ_BOOK();
+          CALL PROC_INPUT();
         END;
         OTHERWISE;
       END;
     END;
   END MAIN_LOOP;
 
-  READ_BOOK: PROC;
+  PROC_INPUT: PROC;
     DCL CLEAN_TYPE CHAR(11);
 
     /* First validate VRSTA input */
@@ -69,19 +93,8 @@
       RETURN;
     END;
 
-    /* Check if type is KNJIGE */
-    IF CLEAN_TYPE <> 'KNJIGE' THEN DO;
-      DISP1O.INFO1BO = 'Za sada je podržan samo prikaz knjiga.';
-      DISP1O.OUTPF1O = (71)'_';
-      DISP1O.OUTPF2O = (71)'_';
-      DISP1O.OUTPF3O = (71)'_';
-      DISP1O.OUTPF4O = (71)'_';
-      DISP1O.OUTPF5O = (71)'_';
-      CALL DISP_SCR();
-      RETURN;
-    END;
+   IF CLEAN_TYPE = 'KNJIGE' THEN DO;
 
-    /* If we get here, type is valid, now check ID */
     SEARCH_ID = SCRUBOUT(DISP1I.ID001BI,'_ ');
 
     IF SEARCH_ID = '' THEN DO;
@@ -106,7 +119,7 @@
       DISP1O.INFO1BO = 'Knjiga pronadjena.';
     END;
     ELSE IF RESPONSE = DFHRESP(NOTFND) THEN DO;
-      DISP1O.INFO1BO = 'Knjiga s ID-om ' ||SEARCH_ID||'nije pronađena.';
+      DISP1O.INFO1BO = 'Knjiga s ID-om '||SEARCH_ID||'nije pronadjena.';
       DISP1O.OUTPF1O = (71)'_';
       DISP1O.OUTPF2O = (71)'_';
       DISP1O.OUTPF3O = (71)'_';
@@ -114,7 +127,46 @@
       DISP1O.OUTPF5O = (71)'_';
     END;
     ELSE DO;
-      DISP1O.INFO1BO = 'Greška pri čitanju: ' || CHAR(RESPONSE);
+      DISP1O.INFO1BO = 'Greska pri citanju: ' || CHAR(RESPONSE);
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+    END;
+   END;
+
+   IF CLEAN_TYPE = 'AUTORI' THEN DO;
+
+    SEARCH_ID = SCRUBOUT(DISP1I.ID001BI,'_ ');
+
+    IF SEARCH_ID = '' THEN DO;
+      DISP1O.INFO1BO = 'Unesite ID autora.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Read record only if both type and ID are valid */
+    EXEC CICS READ FILE('AUTORIV')
+         INTO(AUTORI_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(SEARCH_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+      DISP1O.OUTPF1O = 'Prezime: ' || SCRUBOUT(AUTORI_PREZIME,'_');
+      DISP1O.OUTPF2O = 'Ime: ' || SCRUBOUT(AUTORI_IME,'_');
+    END;
+    ELSE IF RESPONSE = DFHRESP(NOTFND) THEN DO;
+      DISP1O.INFO1BO = 'Autor s ID-om ' ||SEARCH_ID||'nije pronadjen.';
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+    END;
+    ELSE DO;
+      DISP1O.INFO1BO = 'Greska pri citanju: ' || CHAR(RESPONSE);
       DISP1O.OUTPF1O = (71)'_';
       DISP1O.OUTPF2O = (71)'_';
       DISP1O.OUTPF3O = (71)'_';
@@ -122,8 +174,117 @@
       DISP1O.OUTPF5O = (71)'_';
     END;
 
+   END;
+
+   /* Prikaz clanova */
+   IF CLEAN_TYPE = 'CLANOVI' THEN DO;
+
+    SEARCH_ID = SCRUBOUT(DISP1I.ID001BI,'_ ');
+
+    IF SEARCH_ID = '' THEN DO;
+      DISP1O.INFO1BO = 'Unesite ID clana.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Read record only if both type and ID are valid */
+    EXEC CICS READ FILE('CLANOVIV')
+         INTO(CLANOVI_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(SEARCH_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+      DISP1O.OUTPF1O = 'Prezime: ' || SCRUBOUT(CLANOVI_PREZIME,'_');
+      DISP1O.OUTPF2O = 'Ime: ' || SCRUBOUT(CLANOVI_IME,'_');
+      DISP1O.OUTPF3O = 'Datum uclanjenja: ' ||
+                       SUBSTR(SCRUBOUT(CLANOVI_DATOD,' '),1,2)|| '/' ||
+                       SUBSTR(SCRUBOUT(CLANOVI_DATOD,' '),3,2)|| '/' ||
+                       SUBSTR(SCRUBOUT(CLANOVI_DATOD,' '),5,4);
+
+
+      IF CLANOVI_STATUS = '00001' THEN DO;
+        DISP1O.OUTPF4O = 'Status clanarine: ' || CLANOVI_STATUS ||
+        ' - Clanarina aktivna.';
+      END;
+
+      IF CLANOVI_STATUS = '00002' THEN DO;
+        DISP1O.OUTPF4O = 'Status clanarine: ' || CLANOVI_STATUS ||
+        ' - Neplacena clanarina.';
+      END;
+
+      IF CLANOVI_STATUS = '00003' THEN DO;
+        DISP1O.OUTPF4O = 'Status clanarine: ' || CLANOVI_STATUS ||
+        ' - Neaktivna clanarina.';
+      END;
+
+    END;
+    ELSE IF RESPONSE = DFHRESP(NOTFND) THEN DO;
+      DISP1O.INFO1BO = 'Clan s ID-om ' ||SEARCH_ID||'nije pronadjen.';
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+    END;
+    ELSE DO;
+      DISP1O.INFO1BO = 'Greska pri citanju: ' || CHAR(RESPONSE);
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+    END;
+
+   END;
+
+   /* Prikaz posudbi */
+
+   IF CLEAN_TYPE = 'POSUDBA' THEN DO;
+
+    SEARCH_ID = SCRUBOUT(DISP1I.ID001BI,'_ ');
+
+    IF SEARCH_ID = '' THEN DO;
+      DISP1O.INFO1BO = 'Unesite ID posudbe.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Read record only if both type and ID are valid */
+    EXEC CICS READ FILE('POSUDBA')
+         INTO(POSUDBA_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(SEARCH_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+      DISP1O.OUTPF1O = 'ID knjige: ' || POSUDBA_IDKNJ;
+      DISP1O.OUTPF2O = 'ID clana: ' || POSUDBA_IDKOR;
+      DISP1O.OUTPF3O = 'Datum posudbe: ' || POSUDBA_DATPOS;
+    END;
+    ELSE IF RESPONSE = DFHRESP(NOTFND) THEN DO;
+     DISP1O.INFO1BO = 'Posudba s ID-om '||SEARCH_ID||'nije pronadjena.';
+     DISP1O.OUTPF1O = (71)'_';
+     DISP1O.OUTPF2O = (71)'_';
+     DISP1O.OUTPF3O = (71)'_';
+     DISP1O.OUTPF4O = (71)'_';
+     DISP1O.OUTPF5O = (71)'_';
+    END;
+    ELSE DO;
+      DISP1O.INFO1BO = 'Greska pri citanju: ' || CHAR(RESPONSE);
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+    END;
+
+   END;
+
+   /* Prikaz rezervacija */
+
     CALL DISP_SCR();
-  END READ_BOOK;
+  END PROC_INPUT;
 
   DISP_SCR: PROC;
     /* Send map to terminal */
@@ -134,7 +295,7 @@
          RESP(RESPONSE);
 
     IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
-      DISP1O.INFO1BO = 'Greška pri prikazu ekrana.';
+      DISP1O.INFO1BO = 'Greska pri prikazu ekrana.';
       EXEC CICS SEND TEXT FROM(DISP1O.INFO1BO) ERASE;
       EXEC CICS RETURN;
     END;
@@ -150,7 +311,7 @@
       IF EIBAID = DFHCLEAR | EIBAID = DFHPF3 |
          EIBAID = DFHPF5 THEN RETURN;
 
-      DISP1O.INFO1BO = 'Greška pri čitanju unosa.';
+      DISP1O.INFO1BO = 'Greska pri citanju unosa.';
       CALL DISP_SCR();
       EXEC CICS RETURN;
     END;
@@ -176,12 +337,12 @@
     DISP1O.OUTPF5O = (71)'_';
 
     DISP1O.INFO1AO = 'INFO:';
-    DISP1O.INFO1BO = 'Unesite ID knjige i pritisnite ENTER...';
+    DISP1O.INFO1BO = 'Unesite ID i pritisnite ENTER...';
     DISP1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
 
     /* Set field attributes */
     DISP1O.ID001BA = DFHBMFSE;  /* ID input field - unprotected */
-    DISP1O.UNOS01A = DFHBMFSE;  /* VRSTA field - protected */
+    DISP1O.UNOS01A = DFHBMFSE;  /* VRSTA field - unprotected */
     DISP1O.VRSTA1A = DFHBMPRO;  /* Protected fields */
     DISP1O.OPIS1AA = DFHBMPRO;
     DISP1O.OPIS1BA = DFHBMPRO;
