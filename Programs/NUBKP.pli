@@ -4,13 +4,25 @@
   %INCLUDE DFHBMSCA;
   %INCLUDE NBOOK1M;
 
-  EXEC SQL INCLUDE SQLCA;
-  EXEC SQL INCLUDE KNJIGEV;
-
   DCL NBOOK1M CHAR(7) INIT('NBOOK1M');
   DCL NBOOK01 CHAR(6) INIT('NBOOK1');
   DCL COMMAREA CHAR(1);
   DCL RESPONSE FIXED BINARY(31);
+
+  /* VSAM record structure */
+  DCL 1 KNJIGE_RECORD,
+        2 KNJIGE_ID     PIC'(5)9',    /* 5-digit numeric ID */
+        2 KNJIGE_NAZIV  CHAR(60),     /* Book title */
+        2 KNJIGE_AUTOR  CHAR(60),     /* Author name */
+        2 KNJIGE_KAT    CHAR(20),     /* Category */
+        2 KNJIGE_GOD    PIC'(4)9',    /* Year - numeric */
+        2 KNJIGE_KOLIC  PIC'(5)9',    /* Quantity - numeric */
+        2 FILLER        CHAR(46);     /* Padding to 200 bytes */
+
+  DCL VSAM_LEN  FIXED BIN(31) INIT(200); /* Record length */
+  DCL NEXT_ID   PIC'(5)9';               /* For ID generation */
+  DCL TEMP_ID   CHAR(5);                 /* For key operations */
+  DCL IS_NUMERIC BIT(1);                 /* For validation */
 
   CALL INIT_MAP();
   CALL MAIN_LOOP();
@@ -20,7 +32,6 @@
       CALL DISP_SCR();
       CALL HANDLE_AID();
 
-      /* Process based on AID key pressed */
       SELECT(EIBAID);
         WHEN(DFHPF3) DO;  /* Return to menu */
           EXEC CICS XCTL PROGRAM('MENUP')
@@ -35,12 +46,124 @@
           ITERATE;
         END;
         WHEN(DFHENTER) DO;  /* Process input */
-          CALL PROCESS_INPUT();
+          CALL VALIDATE_INPUT();
+          IF IS_NUMERIC THEN
+            CALL ADD_BOOK();
         END;
         OTHERWISE;
       END;
     END;
   END MAIN_LOOP;
+
+ VALIDATE_INPUT: PROC;
+    DCL NUM_CHECK FIXED BIN(31);
+
+    IS_NUMERIC = '1'B;  /* Start with true */
+
+    /* Check if title is empty */
+    IF NBOOK1I.UNOSP1I = '' THEN DO;
+      IS_NUMERIC = '0'B;
+      NBOOK1O.INFO1BO = 'Naziv knjige je obavezan.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Validate year */
+    IF NBOOK1I.UNGOD1I = '' |
+       VERIFY(SCRUBOUT(NBOOK1I.UNGOD1I,'_'), '0123456789 ') > 0 THEN DO;
+      IS_NUMERIC = '0'B;
+      NBOOK1O.INFO1BO = 'Godina mora biti broj.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Convert and check year range */
+    NUM_CHECK = BINARY(SCRUBOUT(NBOOK1I.UNGOD1I,'_ '),31);
+    IF NUM_CHECK < 1000 | NUM_CHECK > 9999 THEN DO;
+      IS_NUMERIC = '0'B;
+      NBOOK1O.INFO1BO = 'Godina mora biti između 1000 i 9999.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Validate quantity */
+    IF NBOOK1I.UNBRK1I = '' |
+       VERIFY(SCRUBOUT(NBOOK1I.UNBRK1I,'_'), '0123456789 ') > 0 THEN DO;
+      IS_NUMERIC = '0'B;
+      NBOOK1O.INFO1BO = 'Količina mora biti broj.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Convert and check quantity */
+    NUM_CHECK = BINARY(SCRUBOUT(NBOOK1I.UNBRK1I,'_ '),31);
+    IF NUM_CHECK <= 0 THEN DO;
+      IS_NUMERIC = '0'B;
+      NBOOK1O.INFO1BO = 'Količina mora biti veća od nule.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+  END VALIDATE_INPUT;
+
+ ADD_BOOK: PROC;
+    /* Generate next ID by reading last record */
+    NEXT_ID = 0;
+    TEMP_ID = '';
+
+    EXEC CICS STARTBR FILE('KNJIGEV')
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+      DO WHILE (RESPONSE = DFHRESP(NORMAL));
+          EXEC CICS READNEXT FILE('KNJIGEV')
+               INTO(KNJIGE_RECORD)
+               LENGTH(VSAM_LEN)
+               RIDFLD(TEMP_ID)
+               RESP(RESPONSE);
+
+          IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+              /* Compare and update NEXT_ID if current ID is larger */
+              IF KNJIGE_ID > NEXT_ID THEN
+                  NEXT_ID = KNJIGE_ID;
+          END;
+      END;
+
+      EXEC CICS ENDBR FILE('KNJIGEV')
+           RESP(RESPONSE);
+    END;
+
+    /* Increment ID */
+    NEXT_ID = NEXT_ID + 1;
+
+    /* Prepare record */
+    KNJIGE_RECORD = '';
+    KNJIGE_ID = NEXT_ID;
+    KNJIGE_NAZIV = SCRUBOUT(NBOOK1I.UNOSP1I,'_');
+    KNJIGE_AUTOR = SCRUBOUT(NBOOK1I.UNAUT1I,'_');
+    KNJIGE_KAT = SCRUBOUT(NBOOK1I.UNKAT1I,'_');
+    KNJIGE_GOD = BINARY(SCRUBOUT(NBOOK1I.UNGOD1I,'_'),31);
+    KNJIGE_KOLIC = BINARY(SCRUBOUT(NBOOK1I.UNBRK1I,'_'),31);
+    TEMP_ID = KNJIGE_ID;
+
+    /* Write new record */
+    EXEC CICS WRITE FILE('KNJIGEV')
+         FROM(KNJIGE_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+        NBOOK1O.INFO1BO = 'Knjiga uspjesno dodana. ID: ' || TEMP_ID;
+        CALL INIT_MAP();
+    END;
+    ELSE
+        NBOOK1O.INFO1BO = 'Greska pri dodavanju knjige: ' ||
+                          CHAR(RESPONSE);
+
+    CALL DISP_SCR();
+  END ADD_BOOK;
 
   DISP_SCR: PROC;
     /* Send map to terminal */
@@ -73,10 +196,6 @@
     END;
   END HANDLE_AID;
 
-  PROCESS_INPUT: PROC;
-    NBOOK1O.INFO1BO = 'Unos je u obradi...';
-  END PROCESS_INPUT;
-
   INIT_MAP: PROC;
     /* Initialize screen fields */
     NBOOK1O.NASLOV1O = 'NBOOK1';
@@ -99,12 +218,12 @@
     NBOOK1O.INFO1BO = 'Unesite podatke i pritisnite ENTER...';
     NBOOK1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
 
-    NBOOK1O.UNOSP1A = DFHBMFSE;  /* Naziv - unprotected, highlighted */
-    NBOOK1O.UNAUT1A = DFHBMFSE;  /* Autor - unprotected, highlighted */
-    NBOOK1O.UNKAT1A = DFHBMFSE;  /*Kategorija-unprotected,highlighted*/
-    NBOOK1O.UNGOD1A = DFHBMFSE;  /* Godina - unprotected, highlighted*/
-    NBOOK1O.UNBRK1A = DFHBMFSE;  /* Broj knjiga - unprotected,
-    highlighted */
+    /* Set field attributes */
+    NBOOK1O.UNOSP1A = DFHBMFSE; /*Naziv - unprotected, highlighted */
+    NBOOK1O.UNAUT1A = DFHBMFSE; /*Autor - unprotected, highlighted */
+    NBOOK1O.UNKAT1A = DFHBMFSE; /*Kategorija-unprotected, highlighted*/
+    NBOOK1O.UNGOD1A = DFHBMFSE; /*Godina - unprotected, highlighted */
+    NBOOK1O.UNBRK1A = DFHBMFSE; /*Broj knjiga-unprotected, highlighted*/
 
     NBOOK1O.ID00001A = DFHBMPRO;  /* ID - protected */
     NBOOK1O.NASLOV1A = DFHBMPRO;  /* Headers - protected */
