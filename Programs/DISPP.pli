@@ -4,34 +4,36 @@
   %INCLUDE DFHBMSCA;
   %INCLUDE DISP1M;
 
-  EXEC SQL INCLUDE SQLCA;
-  EXEC SQL INCLUDE KNJIGEV;
-  EXEC SQL INCLUDE CLANOVIV;
-  EXEC SQL INCLUDE AUTORIV;
-  EXEC SQL INCLUDE DOBAVLJV;
-  EXEC SQL INCLUDE POSUDBAV;
-  EXEC SQL INCLUDE REZERVV;
-  EXEC SQL INCLUDE ZAKASV;
-
   DCL DISP1M CHAR(7) INIT('DISP1M');
   DCL DISP01 CHAR(6) INIT('DISP1');
   DCL COMMAREA CHAR(1);
   DCL RESPONSE FIXED BINARY(31);
 
+  /* VSAM record structure */
+  DCL 1 KNJIGE_RECORD,
+        2 KNJIGE_ID     PIC'(5)9',    /* 5-digit numeric ID */
+        2 KNJIGE_NAZIV  CHAR(60),     /* Book title */
+        2 KNJIGE_AUTOR  CHAR(60),     /* Author name */
+        2 KNJIGE_KAT    CHAR(20),     /* Category */
+        2 KNJIGE_GOD    PIC'(4)9',    /* Year - numeric */
+        2 KNJIGE_KOLIC  PIC'(5)9',    /* Quantity - numeric */
+        2 FILLER        CHAR(46);     /* Padding to 200 bytes */
 
+  DCL VSAM_LEN  FIXED BIN(31) INIT(200); /* Record length */
+  DCL SEARCH_ID CHAR(5);                 /* For key operations */
+
+  CALL INIT_MAP();
   CALL MAIN_LOOP();
 
   MAIN_LOOP: PROC;
     DO FOREVER;
-
-      CALL INIT_MAP();
       CALL DISP_SCR();
       CALL HANDLE_AID();
 
       SELECT(EIBAID);
-        WHEN(DFHPF3) DO;
-         EXEC CICS LINK PROGRAM('MENUP')
-           RESP(RESPONSE);
+        WHEN(DFHPF3) DO;  /* Return to menu */
+          EXEC CICS XCTL PROGRAM('MENUP')
+               RESP(RESPONSE);
         END;
         WHEN(DFHPF5) DO;  /* Refresh screen */
           CALL INIT_MAP();
@@ -42,23 +44,105 @@
           ITERATE;
         END;
         WHEN(DFHENTER) DO;  /* Process input */
-          CALL PROCESS_INPUT();
+          CALL READ_BOOK();
         END;
         OTHERWISE;
       END;
     END;
   END MAIN_LOOP;
 
+  READ_BOOK: PROC;
+    DCL CLEAN_TYPE CHAR(11);
+
+    /* First validate VRSTA input */
+    CLEAN_TYPE = SCRUBOUT(DISP1I.UNOS01I,'_ ');
+
+    /* If type is empty, ask for it */
+    IF CLEAN_TYPE = '' THEN DO;
+      DISP1O.INFO1BO = 'Molimo prvo unesite vrstu prikaza.';
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Check if type is KNJIGE */
+    IF CLEAN_TYPE <> 'KNJIGE' THEN DO;
+      DISP1O.INFO1BO = 'Za sada je podržan samo prikaz knjiga.';
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* If we get here, type is valid, now check ID */
+    SEARCH_ID = SCRUBOUT(DISP1I.ID001BI,'_ ');
+
+    IF SEARCH_ID = '' THEN DO;
+      DISP1O.INFO1BO = 'Unesite ID knjige.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Read record only if both type and ID are valid */
+    EXEC CICS READ FILE('KNJIGEV')
+         INTO(KNJIGE_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(SEARCH_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+      DISP1O.OUTPF1O = 'Naziv: ' || SCRUBOUT(KNJIGE_NAZIV,'_');
+      DISP1O.OUTPF2O = 'Autor: ' || SCRUBOUT(KNJIGE_AUTOR,'_');
+      DISP1O.OUTPF3O = 'Kategorija: ' || SCRUBOUT(KNJIGE_KAT,'_');
+      DISP1O.OUTPF4O = 'Godina izdanja: ' || KNJIGE_GOD;
+      DISP1O.OUTPF5O = 'Kolicina na stanju: ' || KNJIGE_KOLIC;
+      DISP1O.INFO1BO = 'Knjiga pronadjena.';
+    END;
+    ELSE IF RESPONSE = DFHRESP(NOTFND) THEN DO;
+      DISP1O.INFO1BO = 'Knjiga s ID-om ' ||SEARCH_ID||'nije pronađena.';
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+    END;
+    ELSE DO;
+      DISP1O.INFO1BO = 'Greška pri čitanju: ' || CHAR(RESPONSE);
+      DISP1O.OUTPF1O = (71)'_';
+      DISP1O.OUTPF2O = (71)'_';
+      DISP1O.OUTPF3O = (71)'_';
+      DISP1O.OUTPF4O = (71)'_';
+      DISP1O.OUTPF5O = (71)'_';
+    END;
+
+    CALL DISP_SCR();
+  END READ_BOOK;
+
   DISP_SCR: PROC;
     /* Send map to terminal */
     EXEC CICS SEND MAP(DISP01) MAPSET(DISP1M)
          FROM(DISP1O)
-         ERASE;
+         ERASE
+         CURSOR(1)
+         RESP(RESPONSE);
+
+    IF RESPONSE <> DFHRESP(NORMAL) THEN DO;
+      DISP1O.INFO1BO = 'Greška pri prikazu ekrana.';
+      EXEC CICS SEND TEXT FROM(DISP1O.INFO1BO) ERASE;
+      EXEC CICS RETURN;
+    END;
 
     /* Receive input from terminal */
     EXEC CICS RECEIVE MAP(DISP01) MAPSET(DISP1M)
-         INTO(DISP1I);
-
+         INTO(DISP1I)
+         RESP(RESPONSE);
   END DISP_SCR;
 
   HANDLE_AID: PROC;
@@ -66,73 +150,23 @@
       IF EIBAID = DFHCLEAR | EIBAID = DFHPF3 |
          EIBAID = DFHPF5 THEN RETURN;
 
-      DISP1O.INFO1BO = 'Greska pri citanju unosa.';
+      DISP1O.INFO1BO = 'Greška pri čitanju unosa.';
       CALL DISP_SCR();
       EXEC CICS RETURN;
     END;
   END HANDLE_AID;
 
-  PROCESS_INPUT: PROC;
-   DCL VRSTA CHAR(11);
-   DCL UNESENI_ID FIXED BINARY(31);
-
-   /* Provjera unosa vrste */
-   IF DISP1I.UNOS01I = '' THEN DO;
-     DISP1O.INFO1BO = 'Unesite vrstu i ID.';
-     RETURN;
-   END;
-
-   VRSTA = SCRUBOUT(DISP1I.UNOS01I, '_');
-   UNESENI_ID = BINARY(SCRUBOUT(DISP1I.ID001BI,'_'));
-
-   IF VRSTA = 'KNJIGE' THEN DO;
-
-    EXEC SQL SELECT *
-         INTO :KNJIGE
-         FROM VIEW_KNJIGE
-         WHERE ID = :UNESENI_ID;
-
-    SELECT(SQLCODE);
-      WHEN(0) DO;
-        DISP1O = '';
-        DISP1O.OUTPF1O = KNJIGE.NAZIV;
-        DISP1O.OUTPF2O = KNJIGE.AUTOR;
-        DISP1O.OUTPF3O = KNJIGE.KATGRJ;
-        DISP1O.OUTPF4O = CHAR(KNJIGE.GODIZD);
-        DISP1O.OUTPF5O = CHAR(KNJIGE.BRKNJ);
-        DISP1O.INFO1BO = 'Knjiga pronadjena.';
-      END;
-      WHEN(100) DO;
-        DISP1O.INFO1BO = 'Knjiga nije pronadjena.';
-      END;
-      OTHERWISE DO;
-        DISP1O.INFO1BO = 'SQL greska: ' || CHAR(SQLCODE);
-      END;
-    END;
-
-        /* Prikaz rezultata */
-    EXEC CICS SEND MAP(DISP01) MAPSET(DISP1M)
-              FROM(DISP1O)
-              ERASE;
-
-    /* Čekaj PF tipku */
-    EXEC CICS RECEIVE MAP(DISP01) MAPSET(DISP1M)
-              INTO(DISP1I);
-
-   END;
-
-  END PROCESS_INPUT;
-
-  INIT_MAP: PROC;
+   INIT_MAP: PROC;
     /* Initialize screen fields */
     DISP1O.VRSTA1O = 'VRSTA:';
     DISP1O.UNOS01O = (11)'_';
     DISP1O.OPIS1AO = 'KNJIGE,DOBAVLJACI,AUTORI,CLANOVI,POSUDBA,';
     DISP1O.OPIS1BO = 'REZERVACIJA,POSUDBA,ZAKASNINA';
 
+
     DISP1O.ID001AO = 'ID   :';
     DISP1O.ID001BO = (5)'_';
-    DISP1O.OPIS2O = '(ID VRSTE)';
+    DISP1O.OPIS2O = 'ID VRSTE';
 
     /* Initialize output fields */
     DISP1O.OUTPF1O = (71)'_';
@@ -142,12 +176,13 @@
     DISP1O.OUTPF5O = (71)'_';
 
     DISP1O.INFO1AO = 'INFO:';
-    DISP1O.INFO1BO = 'Unesite vrstu i ID i pritisnite ENTER...';
+    DISP1O.INFO1BO = 'Unesite ID knjige i pritisnite ENTER...';
     DISP1O.PFKEYSO = 'PF3-NATRAG,PF5-REFRESH,CTRL-ENTER';
 
-    DISP1O.UNOS01A = DFHBMFSE;
-    DISP1O.ID001BA = DFHBMFSE;
-    DISP1O.VRSTA1A = DFHBMPRO;
+    /* Set field attributes */
+    DISP1O.ID001BA = DFHBMFSE;  /* ID input field - unprotected */
+    DISP1O.UNOS01A = DFHBMFSE;  /* VRSTA field - protected */
+    DISP1O.VRSTA1A = DFHBMPRO;  /* Protected fields */
     DISP1O.OPIS1AA = DFHBMPRO;
     DISP1O.OPIS1BA = DFHBMPRO;
     DISP1O.ID001AA = DFHBMPRO;

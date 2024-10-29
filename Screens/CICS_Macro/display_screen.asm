@@ -78,31 +78,31 @@ OPIS2    DFHMDF POS=(7,22),                                            X
 *
 OUTPF1   DFHMDF POS=(9,2),                                             X
                LENGTH=71,                                              X
-               ATTRB=(PROT),                                           X
+               ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
                INITIAL=' '
 *
 OUTPF2   DFHMDF POS=(11,2),                                            X
                LENGTH=71,                                              X
-               ATTRB=(PROT),                                           X
+               ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
                INITIAL=' '
 *
 OUTPF3   DFHMDF POS=(13,2),                                            X
                LENGTH=71,                                              X
-               ATTRB=(PROT),                                           X
+               ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
                INITIAL=' '
 *
 OUTPF4   DFHMDF POS=(15,2),                                            X
                LENGTH=71,                                              X
-               ATTRB=(PROT),                                           X
+               ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
                INITIAL=' '
 *
 OUTPF5   DFHMDF POS=(17,2),                                            X
                LENGTH=71,                                              X
-               ATTRB=(PROT),                                           X
+               ATTRB=(UNPROT),                                         X
                COLOR=TURQUOISE,                                        X
                INITIAL=' '
 *
