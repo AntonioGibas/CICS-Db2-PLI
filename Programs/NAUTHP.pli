@@ -4,13 +4,23 @@
   %INCLUDE DFHBMSCA;
   %INCLUDE NAUTH1M;
 
-  EXEC SQL INCLUDE SQLCA;
-  EXEC SQL INCLUDE AUTORIV;
-
   DCL NAUTH1M CHAR(7) INIT('NAUTH1M');
   DCL NAUTH01 CHAR(6) INIT('NAUTH1');
   DCL COMMAREA CHAR(1);
   DCL RESPONSE FIXED BINARY(31);
+
+
+  /* VSAM record structure */
+  DCL 1 AUTORI_RECORD,
+        2 AUTORI_ID       PIC'(5)9',    /* 5-digit numeric ID */
+        2 AUTORI_PREZIME  CHAR(60),     /* Author surname */
+        2 AUTORI_IME      CHAR(60),     /* Author name */
+        2 FILLER          CHAR(75);     /* Padding to 200 bytes */
+
+  DCL VSAM_LEN  FIXED BIN(31) INIT(200); /* Record length */
+  DCL NEXT_ID   PIC'(5)9';               /* For ID generation */
+  DCL TEMP_ID   CHAR(5);                 /* For key operations */
+  DCL IS_NUMERIC BIT(1);                 /* For validation */
 
   CALL INIT_MAP();
   CALL MAIN_LOOP();
@@ -34,12 +44,90 @@
           ITERATE;
         END;
         WHEN(DFHENTER) DO;  /* Process input */
-          CALL PROCESS_INPUT();
+          CALL VALIDATE_INPUT();
+          IF IS_NUMERIC THEN CALL ADD_AUTHOR();
         END;
         OTHERWISE;
       END;
     END;
   END MAIN_LOOP;
+
+  ADD_AUTHOR:PROC;
+    /* Generate next ID by reading last record */
+    NEXT_ID = 0;
+    TEMP_ID = '';
+
+    EXEC CICS STARTBR FILE('AUTORIV')
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+      DO WHILE (RESPONSE = DFHRESP(NORMAL));
+          EXEC CICS READNEXT FILE('AUTORIV')
+               INTO(AUTORI_RECORD)
+               LENGTH(VSAM_LEN)
+               RIDFLD(TEMP_ID)
+               RESP(RESPONSE);
+
+          IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+              IF AUTORI_ID > NEXT_ID THEN
+                  NEXT_ID = AUTORI_ID;
+          END;
+      END;
+
+      EXEC CICS ENDBR FILE('AUTORIV')
+           RESP(RESPONSE);
+    END;
+
+    /* Increment ID */
+    NEXT_ID = NEXT_ID + 1;
+
+    /* Prepare record */
+    AUTORI_RECORD = '';
+    AUTORI_ID = NEXT_ID;
+    AUTORI_PREZIME = SCRUBOUT(NAUTH1I.UNOSP1I,'_');
+    AUTORI_IME = SCRUBOUT(NAUTH1I.UNIME1I,'_');
+    TEMP_ID = AUTORI_ID;
+
+    /* Write new record */
+    EXEC CICS WRITE FILE('AUTORIV')
+         FROM(AUTORI_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+        NAUTH1O.INFO1BO = 'Autor uspijesno dodan. ID: '||CHAR(TEMP_ID);
+        /* CALL INIT_MAP(); */
+    END;
+    ELSE
+        NAUTH1O.INFO1BO = 'Greska pri dodavanju autora: ' ||
+                          CHAR(RESPONSE);
+
+    CALL DISP_SCR();
+  END ADD_AUTHOR;
+
+  VALIDATE_INPUT:PROC;
+    DCL NUM_CHECK FIXED BINARY(31);
+
+    IS_NUMERIC = '1'B;  /* Start with true */
+
+    /* check if the name is empty */
+    IF NAUTH1I.UNOSP1I = '' THEN DO;
+        IS_NUMERIC = '0'b;
+        NAUTH1O.INFO1BO = 'Prezime je obavezno.';
+        CALL DISP_SCR();
+        RETURN;
+    END;
+
+    IF NAUTH1I.UNIME1I = '' THEN DO;
+        IS_NUMERIC = '0'b;
+        NAUTH1O.INFO1BO = 'Ime je obavezno.';
+        CALL DISP_SCR();
+        RETURN;
+    END;
+
+  END VALIDATE_INPUT;
 
   DISP_SCR: PROC;
     /* Send map to terminal */
@@ -72,10 +160,6 @@
     END;
   END HANDLE_AID;
 
-  PROCESS_INPUT: PROC;
-    NAUTH1O.INFO1BO = 'Unos je u obradi...';
-  END PROCESS_INPUT;
-
   INIT_MAP: PROC;
     NAUTH1O.NASLOV1O = 'NAUTH1';
     NAUTH1O.NASLOV2O = 'DODAVANJE NOVOG AUTORA U SUSTAV KNJIZNICE';
@@ -83,7 +167,7 @@
     NAUTH1O.NASLOV4O = 'UNESI SVA OSTALA POLJA!';
 
     NAUTH1O.IDUNOSO = 'ID:';
-    NAUTH1O.ID00001O = (5)'_';  /* Will be auto-generated */
+    NAUTH1O.ID00001O = (5)'_';
     NAUTH1O.PREZ01O = 'PREZIME:';
     NAUTH1O.UNOSP1O = (60)'_';
     NAUTH1O.IME001O = 'IME:';
