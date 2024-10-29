@@ -4,13 +4,24 @@
   %INCLUDE DFHBMSCA;
   %INCLUDE NUSER1M;
 
-  EXEC SQL INCLUDE SQLCA;
-  EXEC SQL INCLUDE CLANOVIV;
-
   DCL NUSER1M CHAR(7) INIT('NUSER1M');
   DCL NUSER01 CHAR(6) INIT('NUSER1');
   DCL COMMAREA CHAR(1);
   DCL RESPONSE FIXED BINARY(31);
+
+  /* VSAM record structure */
+  DCL 1 CLANOVI_RECORD,
+        2 CLANOVI_ID       PIC'(5)9',    /* 5-digit numeric ID */
+        2 CLANOVI_PREZIME  CHAR(60),     /* Member lastname */
+        2 CLANOVI_IME      CHAR(60),     /* Member name */
+        2 CLANOVI_DATOD    CHAR(10),     /* Membership from date */
+        2 CLANOVI_STATUS   PIC'(5)9',    /* Membership status */
+        2 FILLER           CHAR(60);     /* Padding to 200 bytes */
+
+  DCL VSAM_LEN  FIXED BIN(31) INIT(200); /* Record length */
+  DCL NEXT_ID   PIC'(5)9';               /* For ID generation */
+  DCL TEMP_ID   CHAR(5);                 /* For key operations */
+  DCL IS_NUMERIC BIT(1);                 /* For validation */
 
   CALL INIT_MAP();
   CALL MAIN_LOOP();
@@ -35,12 +46,103 @@
           ITERATE;
         END;
         WHEN(DFHENTER) DO;  /* Process input */
-          CALL PROCESS_INPUT();
+          CALL VALIDATE_INPUT();
+          IF IS_NUMERIC THEN CALL ADD_MEMBER();
         END;
         OTHERWISE;
       END;
     END;
   END MAIN_LOOP;
+
+  VALIDATE_INPUT:PROC;
+    DCL NUM_CHECK FIXED BIN(31);
+
+    IS_NUMERIC = '1'B;  /* Start with true */
+
+    /* Check if name is empty */
+    IF NUSER1I.UNIME1I = '' THEN DO;
+      IS_NUMERIC = '0'B;
+      NUSER1O.INFO1BO = 'Unesite ime korisnika.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Check if lastname is empty */
+    IF NUSER1I.UNOSP1I = '' THEN DO;
+      IS_NUMERIC = '0'B;
+      NUSER1O.INFO1BO = 'Unesite prezime korisnika.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+    /* Check if date is empty */
+    IF NUSER1I.UNDOD1I = '' THEN DO;
+      IS_NUMERIC = '0'B;
+      NUSER1O.INFO1BO = 'Unesite datum uclanjenja.';
+      CALL DISP_SCR();
+      RETURN;
+    END;
+
+  END VALIDATE_INPUT;
+
+  ADD_MEMBER:PROC;
+
+    /* Generate next ID by reading last record */
+    NEXT_ID = 0;
+    TEMP_ID = '';
+
+    EXEC CICS STARTBR FILE('CLANOVIV')
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+      DO WHILE (RESPONSE = DFHRESP(NORMAL));
+          EXEC CICS READNEXT FILE('CLANOVIV')
+               INTO(CLANOVI_RECORD)
+               LENGTH(VSAM_LEN)
+               RIDFLD(TEMP_ID)
+               RESP(RESPONSE);
+
+          IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+              /* Compare and update NEXT_ID if current ID is larger */
+              IF CLANOVI_ID > NEXT_ID THEN
+                  NEXT_ID = CLANOVI_ID;
+          END;
+      END;
+
+      EXEC CICS ENDBR FILE('CLANOVIV')
+           RESP(RESPONSE);
+    END;
+
+    /* Increment ID */
+    NEXT_ID = NEXT_ID + 1;
+
+    /* Prepare record */
+    CLANOVI_RECORD = '';
+    CLANOVI_ID = NEXT_ID;
+    CLANOVI_PREZIME = SCRUBOUT(NUSER1I.UNOSP1I,'_');
+    CLANOVI_IME     = SCRUBOUT(NUSER1I.IME001I,'_');
+    CLANOVI_DATOD   = SCRUBOUT(NUSER1I.UNDOD1I,'_');
+    CLANOVI_STATUS  = NUSER1I.STATU1I;
+    TEMP_ID = CLANOVI_ID;
+
+    /* Write new record */
+    EXEC CICS WRITE FILE('CLANOVIV')
+         FROM(CLANOVI_RECORD)
+         LENGTH(VSAM_LEN)
+         RIDFLD(TEMP_ID)
+         RESP(RESPONSE);
+
+    IF RESPONSE = DFHRESP(NORMAL) THEN DO;
+        NUSER1O.INFO1BO = 'Dodan novi clan: ' || CHAR(TEMP_ID);
+    END;
+    ELSE
+        NUSER1O.INFO1BO = 'Greska pri dodavanju clana: ' ||
+                          CHAR(RESPONSE);
+
+    CALL DISP_SCR();
+
+  END ADD_MEMBER;
 
   DISP_SCR: PROC;
     /* Send map to terminal */
@@ -72,10 +174,6 @@
     END;
   END HANDLE_AID;
 
-  PROCESS_INPUT: PROC;
-    NUSER1O.INFO1BO = 'Unos je u obradi...';
-  END PROCESS_INPUT;
-
   INIT_MAP: PROC;
     /* Initialize screen fields */
     NUSER1O.NASLOV1O = 'NUSER1';
@@ -91,7 +189,7 @@
     NUSER1O.UNIME1O = (60)'_';
     NUSER1O.DATOD1O = 'DATOD:';
     NUSER1O.UNDOD1O = (8)'_';
-    NUSER1O.OPDOD1O = '(DD/MM/GGGG)';
+    NUSER1O.OPDOD1O = '(DDMMGGGG)';
     NUSER1O.STATUS1O = 'STATUS:';
     NUSER1O.STATU1O = (5)'_';
     NUSER1O.OPSTS1O = '00001 - AKTIVNA';

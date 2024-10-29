@@ -124,7 +124,6 @@
                RESP(RESPONSE);
 
           IF RESPONSE = DFHRESP(NORMAL) THEN DO;
-              /* Compare and update NEXT_ID if current ID is larger */
               IF KNJIGE_ID > NEXT_ID THEN
                   NEXT_ID = KNJIGE_ID;
           END;
@@ -155,8 +154,7 @@
          RESP(RESPONSE);
 
     IF RESPONSE = DFHRESP(NORMAL) THEN DO;
-        NBOOK1O.INFO1BO = 'Knjiga uspjesno dodana. ID: ' || TEMP_ID;
-        CALL INIT_MAP();
+       NBOOK1O.INFO1BO = 'Knjiga uspjesno dodana. ID: '||CHAR(TEMP_ID);
     END;
     ELSE
         NBOOK1O.INFO1BO = 'Greska pri dodavanju knjige: ' ||
